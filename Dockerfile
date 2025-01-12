@@ -48,7 +48,9 @@ COPY ./samourai-dojo/db-scripts/ /docker-entrypoint-initdb.d
 ### Nginx
 
 COPY ./samourai-dojo/docker/my-dojo/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY ./nginx-dojo.conf /etc/nginx/sites-enabled/dojo.conf
+COPY ./nginx/*.conf /etc/nginx/sites-available/
+RUN mkdir /etc/nginx/sites-enabled && \
+    ln -sf /etc/nginx/sites-available/mainnet.conf /etc/nginx/sites-enabled/dojo.conf
 
 ### Docker entrypoint
 
