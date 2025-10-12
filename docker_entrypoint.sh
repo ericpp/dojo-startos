@@ -148,17 +148,13 @@ if [ "$SOROBAN_INSTALL" == "on" ]; then
     
     # Create Soroban onion directory if announce is enabled
     if [ "$SOROBAN_ANNOUNCE" == "on" ]; then
-        # Create and set up Tor directory for Soroban
+        SOROBAN_TOR_ADDRESS=$(yq e '.soroban-tor-address' /root/start9/config.yaml)
         mkdir -p /var/lib/tor/hsv3soroban
-        # Create empty hostname file that Tor will populate when ready
-        touch /var/lib/tor/hsv3soroban/hostname
-        chown -R soroban:soroban /var/lib/tor/hsv3soroban
-        chmod 755 /var/lib/tor/hsv3soroban
-        chmod 644 /var/lib/tor/hsv3soroban/hostname
+        echo "$SOROBAN_TOR_ADDRESS" > /var/lib/tor/hsv3soroban/hostname
     fi
     
     # Start Soroban as the soroban user
-    su -s /bin/bash soroban -c '/usr/local/bin/soroban-restart.sh' &
+    runuser -u soroban -- /usr/local/bin/start-soroban.sh &
     soroban_process=$!
     echo "Soroban started with PID: $soroban_process"
 

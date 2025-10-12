@@ -10,6 +10,15 @@ export const getConfig: T.ExpectedExports.getConfig = compat.getConfig({
     "target": "tor-address",
     "interface": "main",
   },
+  "soroban-tor-address": {
+    "name": "Soroban Tor Address",
+    "description": "The Tor address for Soroban",
+    "type": "pointer",
+    "subtype": "package",
+    "package-id": "dojo",
+    "target": "tor-address",
+    "interface": "soroban",
+  },
   "bitcoin-node": {
     "type": "union",
     "name": "Bitcoin Node",
