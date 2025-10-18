@@ -13,10 +13,10 @@ source /usr/local/bin/config.env
 
 # DATABASE SETUP
 if [ -d "/run/mysqld" ]; then
-	echo "[i] mysqld already present, skipping creation"
+	# mysqld run directory already present, no need to create
 	chown -R mysql:mysql /run/mysqld
 else
-	echo "[i] mysqld not found, creating...."
+	echo "[i] MySQL run directory not found, creating...."
 	mkdir -p /run/mysqld
 	chown -R mysql:mysql /run/mysqld
 fi
@@ -25,16 +25,12 @@ MYSQL_DATABASE=${MYSQL_DATABASE:-"samourai-main"}
 MYSQL_USER=${MYSQL_USER:-"samourai"}
 MYSQL_PASSWORD=${MYSQL_PASSWORD:-"samourai"}
 
-if [ -d /var/lib/mysql/mysql ]; then
-	echo "[i] MySQL directory already present, running update"
-	chown -R mysql:mysql /var/lib/mysql
-
-	sed "1iUSE \`$MYSQL_DATABASE\`;" /docker-entrypoint-initdb.d/2_update.sql | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-name-resolve --skip-networking=0
-else
-	echo "[i] MySQL data directory not found, creating initial DBs"
+if [ ! -f /var/lib/mysql/.dojo_db_initialized ]; then
+	echo "[i] MySQL data directory not found or not initialized, creating initial DBs"
 
 	mkdir -p /var/lib/mysql
 	chown -R mysql:mysql /var/lib/mysql
+	touch /var/lib/mysql/.dojo_db_initialized
 
 	mysql_install_db --user=mysql --ldata=/var/lib/mysql > /dev/null
 
@@ -78,6 +74,12 @@ EOF
 	/usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-name-resolve --skip-networking=0 < "$tfile"
 
 	rm -f "$tfile"
+	echo
+	echo 'MySQL init process done. Starting mysqld...'
+	echo
+
+	# Run initial SQL scripts
+	sed "1iUSE \`$MYSQL_DATABASE\`;" /docker-entrypoint-initdb.d/2_update.sql | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-name-resolve --skip-networking=0
 
 	for f in /docker-entrypoint-initdb.d/*; do
 		case "$f" in
@@ -87,9 +89,9 @@ EOF
 		echo
 	done
 
-	echo
-	echo 'MySQL init process done. Starting mysqld...'
-	echo
+	touch /var/lib/mysql/.dojo_db_initialized
+else
+	echo "[i] MySQL data directory already initialized, skipping initial DB creation."
 fi
 
 # Start mysql
@@ -97,17 +99,23 @@ fi
 db_process=$!
 
 # Config tor and explorer
+echo "[i] Reading Dojo Tor address from config..."
 TOR_ADDRESS=$(yq e '.tor-address' /root/start9/config.yaml)
+echo "[i] Dojo Tor address: $TOR_ADDRESS"
 mkdir -p /var/lib/tor/hsv3dojo
 echo "$TOR_ADDRESS" > /var/lib/tor/hsv3dojo/hostname
 
 if [ "$COMMON_BTC_NETWORK" = "testnet" ]; then
 	PAIRING_URL="http://$TOR_ADDRESS/test/v2"
 	EXPLORER_ENDPOINT="mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/testnet4"
+	echo "[i] Running on TESTNET"
 else
 	PAIRING_URL="http://$TOR_ADDRESS/v2"
 	EXPLORER_ENDPOINT="mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion"
+	echo "[i] Running on MAINNET"
 fi
+
+echo "[i] Pairing URL: $PAIRING_URL"
 
 # Set dojo config corresponding to current network
 if [ "$COMMON_BTC_NETWORK" = "testnet" ]; then
@@ -143,28 +151,19 @@ data:
 EOF
 
 # Start Soroban if enabled
-if [ "$SOROBAN_INSTALL" == "on" ]; then
-    echo "Starting Soroban service..."
-    
-    # Create Soroban onion directory if announce is enabled
-    if [ "$SOROBAN_ANNOUNCE" == "on" ]; then
-        # Create and set up Tor directory for Soroban
-        mkdir -p /var/lib/tor/hsv3soroban
-        # Create empty hostname file that Tor will populate when ready
-        touch /var/lib/tor/hsv3soroban/hostname
-        chown -R soroban:soroban /var/lib/tor/hsv3soroban
-        chmod 755 /var/lib/tor/hsv3soroban
-        chmod 644 /var/lib/tor/hsv3soroban/hostname
-    fi
-    
-    # Start Soroban as the soroban user
-    su -s /bin/bash soroban -c '/usr/local/bin/soroban-restart.sh' &
-    soroban_process=$!
-    echo "Soroban started with PID: $soroban_process"
+echo "[i] Checking Soroban configuration..."
+echo "[i] SOROBAN_INSTALL=$SOROBAN_INSTALL"
+echo "[i] SOROBAN_ANNOUNCE=$SOROBAN_ANNOUNCE"
 
+if [ "$SOROBAN_INSTALL" = "on" ]; then
+	echo "[i] Starting Soroban process as soroban user..."
+	mkdir -p $(dirname $SOROBAN_ONION_FILE)
+	chown -R soroban:soroban $(dirname $SOROBAN_ONION_FILE)
+	runuser -u soroban -- /usr/local/bin/soroban-restart.sh &
+	soroban_process=$!
 else
-    echo "Soroban is disabled (SOROBAN_INSTALL=$SOROBAN_INSTALL)"
-    soroban_process=""
+	echo "[i] Soroban is disabled"
+	soroban_process=""
 fi
 
 # Start node services
@@ -175,7 +174,7 @@ backend_process=$!
 /home/node/app/wait-for-it.sh 127.0.0.1:8080 --timeout=720 --strict -- nginx &
 frontend_process=$!
 
-echo 'All processes initialized'
+echo '[i] All processes initialized'
 
 # SIGTERM HANDLING
 trap _term SIGTERM
