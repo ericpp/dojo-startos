@@ -20,51 +20,51 @@ RUN cd "$APP_DIR" && \
 
 FROM alpine:3.20 AS torproject
 
-ENV     TOR_GIT_URL     https://git.torproject.org/tor.git
-ENV     TOR_VERSION     tor-0.4.8.16
+ENV TOR_GIT_URL=https://git.torproject.org/tor.git
+ENV TOR_VERSION=tor-0.4.8.16
 
-RUN     apk --update --no-cache add ca-certificates
-RUN     apk --no-cache add alpine-sdk automake autoconf git
-RUN     apk --no-cache add openssl-dev libevent-dev zlib-dev
+RUN apk --update --no-cache add ca-certificates
+RUN apk --no-cache add alpine-sdk automake autoconf git
+RUN apk --no-cache add openssl-dev libevent-dev zlib-dev
 
-RUN     git clone $TOR_GIT_URL /tor -b $TOR_VERSION --depth 1
+RUN git clone $TOR_GIT_URL /tor -b $TOR_VERSION --depth 1
 
 WORKDIR /tor
 
-RUN     ./autogen.sh
+RUN ./autogen.sh
 
-RUN     ./configure                                           \
-        --disable-system-torrc                                \
-        --disable-asciidoc                                    \
-        --disable-unittests                                   \
-        --prefix=/stage
+RUN ./configure                                           \
+    --disable-system-torrc                                \
+    --disable-asciidoc                                    \
+    --disable-unittests                                   \
+    --prefix=/stage
 
-RUN     make -j 4 && make install
+RUN make -j 4 && make install
 
-RUN     cp /stage/etc/tor/torrc.sample /stage/.torrc
+RUN cp /stage/etc/tor/torrc.sample /stage/.torrc
 
 ##### Soroban Go build stage
 
 FROM golang:1.22.8-alpine3.20 AS soroban-build
 
-ENV     SOROBAN_VERSION         0.4.1
-ENV     SOROBAN_URL             https://github.com/Dojo-Open-Source-Project/soroban/archive/refs/tags/v$SOROBAN_VERSION.tar.gz
+ENV SOROBAN_VERSION=0.4.1
+ENV SOROBAN_URL=https://github.com/Dojo-Open-Source-Project/soroban/archive/refs/tags/v$SOROBAN_VERSION.tar.gz
 
-RUN     apk --no-cache --update add ca-certificates
-RUN     apk --no-cache --update add alpine-sdk linux-headers wget
+RUN apk --no-cache --update add ca-certificates
+RUN apk --no-cache --update add alpine-sdk linux-headers wget
 
-RUN     set -ex && \
-        mkdir -p /stage && \
-        mkdir -p /src && \
-        cd ~ && \
-        wget -qO soroban.tar.gz "$SOROBAN_URL" && \
-        tar -xzvf soroban.tar.gz -C /src --strip-components 1 && \
-        rm soroban.tar.gz && \
-        cd /src
+RUN set -ex && \
+    mkdir -p /stage && \
+    mkdir -p /src && \
+    cd ~ && \
+    wget -qO soroban.tar.gz "$SOROBAN_URL" && \
+    tar -xzvf soroban.tar.gz -C /src --strip-components 1 && \
+    rm soroban.tar.gz && \
+    cd /src
 
 WORKDIR /src
-RUN     go mod download
-RUN     go build -a -tags netgo -o /stage/soroban-server ./cmd/server
+RUN go mod download
+RUN go build -a -tags netgo -o /stage/soroban-server ./cmd/server
 
 ##### Final stage
 
