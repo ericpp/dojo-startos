@@ -166,8 +166,12 @@ else
 	soroban_process=""
 fi
 
-# Start node services
-/home/node/app/wait-for-it.sh 127.0.0.1:3306 --timeout=720 --strict -- pm2-runtime -u node --raw /home/node/app/pm2.config.cjs &
+# Start dojo
+if [ "$SOROBAN_INSTALL" = "on" ]; then
+	/home/node/app/wait-for-it.sh 127.0.0.1:4242 --timeout=720 --strict -- pm2-runtime -u node --raw /home/node/app/pm2.config.cjs &
+else
+	/home/node/app/wait-for-it.sh 127.0.0.1:3306 --timeout=720 --strict -- pm2-runtime -u node --raw /home/node/app/pm2.config.cjs &
+fi
 backend_process=$!
 
 # Start nginx
