@@ -16,9 +16,9 @@ COPY ./samourai-dojo/. "$APP_DIR"
 RUN cd "$APP_DIR" && \
     npm install --omit=dev --build-from-source=false
 
-##### Tor build stage
+##### Tor build
 
-FROM alpine:3.20 AS torproject
+FROM alpine:3.22 AS torproject
 
 ENV TOR_GIT_URL=https://git.torproject.org/tor.git
 ENV TOR_VERSION=tor-0.4.8.16
@@ -43,9 +43,9 @@ RUN make -j 4 && make install
 
 RUN cp /stage/etc/tor/torrc.sample /stage/.torrc
 
-##### Soroban Go build stage
+##### Soroban build
 
-FROM golang:1.22.8-alpine3.20 AS soroban-build
+FROM golang:1.23-alpine3.22 AS soroban-build
 
 ENV SOROBAN_VERSION=0.4.1
 ENV SOROBAN_URL=https://github.com/Dojo-Open-Source-Project/soroban/archive/refs/tags/v$SOROBAN_VERSION.tar.gz
@@ -75,9 +75,10 @@ ENV APP_DIR=/home/node/app
 ENV SOROBAN_HOME=/home/soroban
 
 RUN set -ex && \
-    apk --no-cache add shadow bash && \
+    apk --update --no-cache add ca-certificates bash && \
+    apk --no-cache add shadow && \
     apk --no-cache add mariadb mariadb-client pwgen nginx yq curl netcat-openbsd && \
-    apk --no-cache add openssl libevent zlib
+    apk --no-cache add openssl libevent zlib runuser
 
 ### Node
 
@@ -98,27 +99,36 @@ COPY ./samourai-dojo/db-scripts/2_update.sql /docker-entrypoint-initdb.d/2_updat
 
 ### Tor
 
+ARG SOROBAN_TOR_LINUX_UID=1112
+ARG SOROBAN_TOR_LINUX_GID=1115
+
 COPY --from=torproject /stage /usr/local
+
+RUN addgroup -g ${SOROBAN_TOR_LINUX_GID} -S tor && \
+    adduser --system --ingroup tor --uid ${SOROBAN_TOR_LINUX_UID} tor
+
+RUN mkdir -p /var/lib/tor
+RUN chown tor:tor /var/lib/tor
+
+RUN cp /usr/local/etc/tor/torrc.sample /home/tor/.torrc
 
 ### Soroban
 
+ENV SOROBAN_HOME /home/soroban
+ARG SOROBAN_LINUX_UID=1111
+ARG SOROBAN_LINUX_GID=1114
+
 COPY --from=soroban-build /stage/soroban-server /usr/local/bin
 
-# Create soroban user and group
-RUN addgroup -g 1001 -S soroban && \
-    adduser --system --ingroup soroban --uid 1001 soroban
+# Create Soroban group and user
+RUN addgroup -g ${SOROBAN_LINUX_GID} -S soroban && \
+    adduser --system --ingroup soroban --uid ${SOROBAN_LINUX_UID} soroban
 
-# Create Soroban data directory
+# Create data directory
 RUN mkdir "$SOROBAN_HOME/data" && \
     chown -h soroban:soroban "$SOROBAN_HOME/data"
 
-# Copy Tor config for Soroban
-RUN cp /usr/local/etc/tor/torrc.sample /home/soroban/.torrc && \
-    chown soroban:soroban /home/soroban/.torrc
-
-# Copy Soroban scripts
-COPY --chown=soroban:soroban --chmod=754 ./samourai-dojo/docker/my-dojo/soroban/restart.sh /usr/local/bin/soroban-restart.sh
-COPY --chown=soroban:soroban --chmod=754 ./samourai-dojo/docker/my-dojo/soroban/healthcheck.sh /usr/local/bin/soroban-healthcheck.sh
+RUN cp /home/tor/.torrc /home/soroban/.torrc
 
 ### Nginx
 
@@ -137,3 +147,4 @@ COPY --chmod=755 ./check-mysql.sh /usr/local/bin/
 COPY --chmod=755 ./check-pushtx.sh /usr/local/bin/
 COPY --chmod=755 ./check-soroban.sh /usr/local/bin/
 COPY --chmod=755 ./functions.sh /usr/local/bin/
+COPY --chmod=755 ./samourai-dojo/docker/my-dojo/soroban/restart.sh /usr/local/bin/soroban-restart.sh
