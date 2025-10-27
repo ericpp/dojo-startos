@@ -141,6 +141,7 @@ RUN mkdir /etc/nginx/sites-enabled && \
 
 COPY ./config.env /usr/local/bin/config.env
 COPY --chmod=755 ./docker_entrypoint.sh /usr/local/bin/
+COPY --chmod=755 ./migrate-db.sh /usr/local/bin/
 COPY --chmod=755 ./check-synced.sh /usr/local/bin/
 COPY --chmod=755 ./check-api.sh /usr/local/bin/
 COPY --chmod=755 ./check-mysql.sh /usr/local/bin/

@@ -72,20 +72,10 @@ health-checks:
     io-format: yaml
   soroban:
     name: Soroban
-    success-message: Soroban P2P relay service is online and ready
-    type: docker
-    image: main
-    entrypoint: 'check-soroban.sh'
-    args: []
-    inject: true
-    system: false
-    io-format: yaml
-  soroban:
-    name: Soroban
     success-message: Soroban is running
     type: docker
     image: main
-    entrypoint: "check-soroban.sh"
+    entrypoint: 'check-soroban.sh'
     args: []
     inject: true
     system: false
