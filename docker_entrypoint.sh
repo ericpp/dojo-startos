@@ -25,7 +25,7 @@ MYSQL_DATABASE=${MYSQL_DATABASE:-"samourai-main"}
 MYSQL_USER=${MYSQL_USER:-"samourai"}
 MYSQL_PASSWORD=${MYSQL_PASSWORD:-"samourai"}
 
-if [ ! -f /var/lib/mysql/.dojo_db_initialized ]; then
+if [ ! -d  /var/lib/mysql/mysql ]; then
 	echo "[i] MySQL data directory not found or not initialized, creating initial DBs"
 
 	mkdir -p /var/lib/mysql
@@ -77,8 +77,6 @@ EOF
 	echo
 	echo 'MySQL init process done. Starting mysqld...'
 	echo
-
-	touch /var/lib/mysql/.dojo_db_initialized
 else
 	echo "[i] MySQL data directory already initialized, skipping initial DB creation."
 fi
