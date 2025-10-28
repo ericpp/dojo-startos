@@ -25,7 +25,7 @@ MYSQL_DATABASE=${MYSQL_DATABASE:-"samourai-main"}
 MYSQL_USER=${MYSQL_USER:-"samourai"}
 MYSQL_PASSWORD=${MYSQL_PASSWORD:-"samourai"}
 
-if [ ! -f /var/lib/mysql/.dojo_db_initialized ]; then
+if [ ! -d  /var/lib/mysql/mysql ]; then
 	echo "[i] MySQL data directory not found or not initialized, creating initial DBs"
 
 	mkdir -p /var/lib/mysql
@@ -77,22 +77,19 @@ EOF
 	echo
 	echo 'MySQL init process done. Starting mysqld...'
 	echo
-
-	# Run initial SQL scripts
-	sed "1iUSE \`$MYSQL_DATABASE\`;" /docker-entrypoint-initdb.d/2_update.sql | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-name-resolve --skip-networking=0
-
-	for f in /docker-entrypoint-initdb.d/*; do
-		case "$f" in
-			*.sql)    echo "$0: running $f"; sed "1iUSE \`$MYSQL_DATABASE\`;" "$f" | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-name-resolve --skip-networking=0; echo ;;
-			*)        echo "$0: ignoring or entrypoint initdb empty $f" ;;
-		esac
-		echo
-	done
-
-	touch /var/lib/mysql/.dojo_db_initialized
 else
 	echo "[i] MySQL data directory already initialized, skipping initial DB creation."
 fi
+
+# Migrate database tables
+echo "[i] Running database migration..."
+for f in /docker-entrypoint-initdb.d/*; do
+	case "$f" in
+		*.sql)    echo "$0: running $f"; sed "1iUSE \`$MYSQL_DATABASE\`;" "$f" | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-name-resolve --skip-networking=0; echo ;;
+		*)        echo "$0: ignoring or entrypoint initdb empty $f" ;;
+	esac
+	echo
+done
 
 # Start mysql
 /usr/bin/mysqld_safe --user=mysql --datadir='/var/lib/mysql' &
