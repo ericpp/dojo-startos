@@ -5,12 +5,13 @@ export const migration: T.ExpectedExports.migration = compat.migrations.fromMapp
     '1.28.0.0': {
       up: compat.migrations.updateConfig(
         (config: any) => {
-          // Add default soroban-announce config for users upgrading from versions before 1.28.0
-          if (!config['soroban-announce']) {
-            config['soroban-announce'] = {
-              enabled: 'disabled',
-            }
+          // Add default soroban and pandotx config for users upgrading from versions before 1.28.0
+          config['soroban-announce'] = {
+            'enabled': 'disabled'
           }
+          config['pandotx-push'] = true
+          config['pandotx-retries'] = 2
+          config['pandotx-fallback-mode'] = 'convenient'
           return config
         },
         true,
@@ -18,8 +19,10 @@ export const migration: T.ExpectedExports.migration = compat.migrations.fromMapp
       ),
       down: compat.migrations.updateConfig(
         (config: any) => {
-          // Remove soroban-announce config when downgrading
           delete config['soroban-announce']
+          delete config['pandotx-push']
+          delete config['pandotx-retries']
+          delete config['pandotx-fallback-mode']
           return config
         },
         true,
@@ -27,5 +30,5 @@ export const migration: T.ExpectedExports.migration = compat.migrations.fromMapp
       ),
     },
   },
-  '1.27.0.0',
+  '1.28.0.0',
 )
