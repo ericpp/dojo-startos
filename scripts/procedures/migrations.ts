@@ -7,7 +7,7 @@ export const migration: T.ExpectedExports.migration = compat.migrations.fromMapp
         (config: any) => {
           // Add default soroban and pandotx config for users upgrading from versions before 1.28.0
           config['soroban-announce'] = {
-            'enabled': 'disabled'
+            enabled: 'disabled',
           }
           config['pandotx-push'] = true
           config['pandotx-retries'] = 2

@@ -1,4 +1,4 @@
-import { types as T, matches } from "../deps.ts";
+import { matches, types as T } from "../deps.ts";
 
 const { shape, number, string, boolean } = matches;
 
@@ -7,18 +7,18 @@ const matchBitcoindConfig = shape({
     enable: boolean,
     advanced: shape({
       threads: number,
-    })
+    }),
   }),
   advanced: shape({
     pruning: shape({
-      mode: string
-    })
+      mode: string,
+    }),
   }),
-  'zmq-enabled': boolean
+  "zmq-enabled": boolean,
 });
 
 const matchIndexerConfig = shape({
-  type: string,  // "electrs" or "fulcrum"
+  type: string, // "electrs" or "fulcrum"
 });
 
 export const dependencies: T.ExpectedExports.dependencies = {
@@ -28,15 +28,15 @@ export const dependencies: T.ExpectedExports.dependencies = {
       effects.info("check bitcoind");
 
       if (!matchBitcoindConfig.test(config)) {
-        return { error: "Bitcoind config is not the correct shape" }
+        return { error: "Bitcoind config is not the correct shape" };
       }
 
       if (!config.rpc.enable) {
         return { error: "Must have RPC enabled" };
       }
 
-      if (!config['zmq-enabled']) {
-	return { error: "Must have ZeroMQ enabled" };
+      if (!config["zmq-enabled"]) {
+        return { error: "Must have ZeroMQ enabled" };
       }
 
       if (config.advanced.pruning.mode !== "disabled") {
@@ -53,7 +53,7 @@ export const dependencies: T.ExpectedExports.dependencies = {
 
       config.rpc.enable = true;
 
-      config['zmq-enabled'] = true;
+      config["zmq-enabled"] = true;
 
       if (config.advanced.pruning.mode !== "disabled") {
         config.advanced.pruning.mode = "disabled";
@@ -62,21 +62,21 @@ export const dependencies: T.ExpectedExports.dependencies = {
       return { result: config };
     },
   },
-  'bitcoind-testnet': {
+  "bitcoind-testnet": {
     // deno-lint-ignore require-await
     async check(effects, config) {
       effects.info("check bitcoind-testnet");
 
       if (!matchBitcoindConfig.test(config)) {
-        return { error: "Bitcoind-testnet config is not the correct shape" }
+        return { error: "Bitcoind-testnet config is not the correct shape" };
       }
 
       if (!config.rpc.enable) {
         return { error: "Must have RPC enabled" };
       }
 
-      if (!config['zmq-enabled']) {
-	return { error: "Must have ZeroMQ enabled" };
+      if (!config["zmq-enabled"]) {
+        return { error: "Must have ZeroMQ enabled" };
       }
 
       if (config.advanced.pruning.mode !== "disabled") {
@@ -93,7 +93,7 @@ export const dependencies: T.ExpectedExports.dependencies = {
 
       config.rpc.enable = true;
 
-      config['zmq-enabled'] = true;
+      config["zmq-enabled"] = true;
 
       if (config.advanced.pruning.mode !== "disabled") {
         config.advanced.pruning.mode = "disabled";
@@ -122,10 +122,10 @@ export const dependencies: T.ExpectedExports.dependencies = {
 
       // Set default type if not specified
       if (!config.type) {
-        config.type = "fulcrum";  // default to fulcrum
+        config.type = "fulcrum"; // default to fulcrum
       }
 
       return { result: config };
     },
-  }
+  },
 };
