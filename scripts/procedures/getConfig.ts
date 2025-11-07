@@ -29,7 +29,7 @@ export const getConfig: T.ExpectedExports.getConfig = compat.getConfig({
         username: {
           type: "pointer",
           name: "RPC Username",
-          description: "The username for Bitcoin Core"s RPC interface",
+          description: "The username for Bitcoin Core's RPC interface",
           subtype: "package",
           "package-id": "bitcoind",
           target: "config",
@@ -39,7 +39,7 @@ export const getConfig: T.ExpectedExports.getConfig = compat.getConfig({
         password: {
           type: "pointer",
           name: "RPC Password",
-          description: "The password for Bitcoin Core"s RPC interface",
+          description: "The password for Bitcoin Core's RPC interface",
           subtype: "package",
           "package-id": "bitcoind",
           target: "config",
