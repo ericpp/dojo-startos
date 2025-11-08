@@ -1,6 +1,6 @@
 id: dojo
 title: 'Dojo'
-version: 1.28.0.0
+version: 1.28.2.0
 release-notes: Version v1.28.0
 license: AGPLv3
 wrapper-repo: 'https://github.com/ericpp/dojo-startos'
