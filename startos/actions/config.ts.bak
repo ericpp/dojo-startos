@@ -1,0 +1,267 @@
+import { store } from '../fileModels/store.json'
+import { sdk } from '../sdk'
+import { i18n } from '../i18n'
+
+const { InputSpec, Value, Variants } = sdk
+
+const bitcoindSpec = InputSpec.of({
+  username: Value.text({
+    name: i18n('RPC Username'),
+    required: false,
+    default: null,
+    placeholder: null,
+    inputmode: 'text',
+    patterns: [],
+    masked: false,
+  }),
+  password: Value.text({
+    name: i18n('RPC Password'),
+    required: false,
+    default: null,
+    placeholder: null,
+    inputmode: 'text',
+    patterns: [],
+    masked: true,
+  }),
+})
+
+const bitcoinNodeVariants = Variants.of({
+  bitcoind: {
+    name: i18n('Bitcoin Core'),
+    spec: bitcoindSpec,
+  },
+  'bitcoind-testnet': {
+    name: i18n('Bitcoin Core (testnet4)'),
+    spec: InputSpec.of({
+      username: Value.text({
+        name: i18n('RPC Username'),
+        required: false,
+        default: null,
+        placeholder: null,
+        inputmode: 'text',
+        patterns: [],
+        masked: false,
+      }),
+      password: Value.text({
+        name: i18n('RPC Password'),
+        required: false,
+        default: null,
+        placeholder: null,
+        inputmode: 'text',
+        patterns: [],
+        masked: true,
+      }),
+    }),
+  },
+})
+
+const indexerVariants = Variants.of({
+  electrs: {
+    name: i18n('electrs'),
+    spec: InputSpec.of({}),
+  },
+  fulcrum: {
+    name: i18n('Fulcrum'),
+    spec: InputSpec.of({}),
+  },
+})
+
+const sorobanVariants = Variants.of({
+  disabled: {
+    name: i18n('Disabled'),
+    spec: InputSpec.of({}),
+  },
+  enabled: {
+    name: i18n('Enabled'),
+    spec: InputSpec.of({
+      'pandotx-process': Value.toggle({
+        name: i18n('PandoTx Process'),
+        description: i18n(
+          'Process and relay transactions from other Soroban nodes',
+        ),
+        default: false,
+      }),
+    }),
+  },
+})
+
+export const inputSpec = InputSpec.of({
+  'bitcoin-node': Value.union({
+    name: i18n('Bitcoin Node'),
+    description: i18n(
+      'The Bitcoin node type you would like to use for Dojo',
+    ),
+    warning: null,
+    variants: bitcoinNodeVariants,
+    default: 'bitcoind',
+  }),
+  indexer: Value.union({
+    name: i18n('Indexer'),
+    description: i18n('The indexer you want to use for Dojo'),
+    warning: null,
+    variants: indexerVariants,
+    default: 'electrs',
+  }),
+  'payment-code': Value.text({
+    name: i18n('BIP47 Payment Code'),
+    required: false,
+    default: null,
+    placeholder: null,
+    inputmode: 'text',
+    patterns: [],
+    masked: false,
+  }),
+  'admin-key': Value.text({
+    name: i18n('Admin Key'),
+    description: i18n('Key for accessing the admin/maintenance'),
+    required: true,
+    default: { charset: 'a-z,A-Z,0-9', len: 22 },
+    placeholder: null,
+    inputmode: 'text',
+    patterns: [],
+    masked: true,
+    generate: { charset: 'a-z,A-Z,0-9', len: 22 },
+  }),
+  'api-key': Value.text({
+    name: i18n('API Key'),
+    description: i18n('Key for accessing the services'),
+    required: true,
+    default: { charset: 'a-z,A-Z,0-9', len: 22 },
+    placeholder: null,
+    inputmode: 'text',
+    patterns: [],
+    masked: true,
+    generate: { charset: 'a-z,A-Z,0-9', len: 22 },
+  }),
+  'jwt-secret': Value.text({
+    name: i18n('JWT Secret'),
+    description: i18n('Secret used by the server for signing'),
+    required: true,
+    default: { charset: 'a-z,A-Z,0-9', len: 22 },
+    placeholder: null,
+    inputmode: 'text',
+    patterns: [],
+    masked: true,
+    generate: { charset: 'a-z,A-Z,0-9', len: 22 },
+  }),
+  'soroban-announce': Value.union({
+    name: i18n('Soroban Network Announce'),
+    description: i18n('Configure Soroban network participation'),
+    warning: null,
+    variants: sorobanVariants,
+    default: 'disabled',
+  }),
+  'pandotx-push': Value.toggle({
+    name: i18n('PandoTx Push'),
+    description: i18n(
+      'Push your transactions through random Soroban nodes for enhanced privacy',
+    ),
+    default: true,
+  }),
+  'pandotx-retries': Value.number({
+    name: i18n('PandoTx Retries'),
+    description: i18n('Maximum retry attempts for failed transaction pushes'),
+    required: true,
+    default: 2,
+    min: 0,
+    max: 10,
+    integer: true,
+    units: null,
+    placeholder: null,
+  }),
+  'pandotx-fallback-mode': Value.select({
+    name: i18n('PandoTx Fallback Mode'),
+    description: i18n('Behavior when Soroban push fails'),
+    values: {
+      convenient: i18n('Convenient (fallback to local node)'),
+      secure: i18n('Secure (fail if Soroban unavailable)'),
+    },
+    default: 'convenient',
+  }),
+})
+
+export const configAction = sdk.Action.withInput(
+  'config',
+
+  async ({ effects }) => ({
+    name: i18n('Dojo Web UI'),
+    description: i18n(
+      'The Bitcoin node type you would like to use for Dojo',
+    ),
+    warning: null,
+    allowedStatuses: 'any',
+    group: null,
+    visibility: 'enabled',
+  }),
+
+  inputSpec,
+
+  async ({ effects }) => {
+    const current = await store.read().const(effects)
+    if (!current) return {}
+    return {
+      'bitcoin-node': {
+        selection: current['bitcoin-node']?.type || 'bitcoind',
+        value: {
+          username: current['bitcoin-node']?.username || '',
+          password: current['bitcoin-node']?.password || '',
+        },
+      },
+      indexer: {
+        selection: current.indexer?.type || 'electrs',
+        value: {},
+      },
+      'payment-code': current['payment-code'] || '',
+      'admin-key': current['admin-key'] || '',
+      'api-key': current['api-key'] || '',
+      'jwt-secret': current['jwt-secret'] || '',
+      'soroban-announce': {
+        selection: current['soroban-announce']?.enabled || 'disabled',
+        value:
+          current['soroban-announce']?.enabled === 'enabled'
+            ? {
+                'pandotx-process':
+                  current['soroban-announce']?.['pandotx-process'] || false,
+              }
+            : {},
+      },
+      'pandotx-push': current['pandotx-push'] ?? true,
+      'pandotx-retries': current['pandotx-retries'] ?? 2,
+      'pandotx-fallback-mode':
+        current['pandotx-fallback-mode'] || 'convenient',
+    }
+  },
+
+  async ({ effects, input }) => {
+    const bitcoinNode = input['bitcoin-node']
+    const indexer = input['indexer']
+    const sorobanAnnounce = input['soroban-announce']
+
+    await store.write(effects, {
+      'bitcoin-node': {
+        type: bitcoinNode.selection as 'bitcoind' | 'bitcoind-testnet',
+        username: (bitcoinNode.value as any)?.username,
+        password: (bitcoinNode.value as any)?.password,
+      },
+      indexer: {
+        type: indexer.selection as 'electrs' | 'fulcrum',
+      },
+      'payment-code': input['payment-code'] || null,
+      'admin-key': input['admin-key'] as string,
+      'api-key': input['api-key'] as string,
+      'jwt-secret': input['jwt-secret'] as string,
+      'soroban-announce': {
+        enabled: sorobanAnnounce.selection as 'disabled' | 'enabled',
+        'pandotx-process':
+          sorobanAnnounce.selection === 'enabled'
+            ? (sorobanAnnounce.value as any)?.['pandotx-process'] || false
+            : undefined,
+      },
+      'pandotx-push': input['pandotx-push'] as boolean,
+      'pandotx-retries': input['pandotx-retries'] as number,
+      'pandotx-fallback-mode': input['pandotx-fallback-mode'] as
+        | 'convenient'
+        | 'secure',
+    })
+  },
+)

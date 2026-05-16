@@ -4,7 +4,7 @@
 do_authenticate () {
   local ak=$1
   auth_result=$(curl -X POST -s --data-binary "apikey=$ak&at=null" -H "Content-Type: application/json" "http://localhost:8080/auth/login")
-  at=$(echo "$auth_result" | yq e ".authorizations.access_token" 2>/dev/null)
+  at=$(echo "$auth_result" | jq -r '.authorizations.access_token // empty' 2>/dev/null)
   if [ -n "$at" ] && [ "$at" != "null" ]; then
     echo "$at" > /run/secrets/access_token
     echo "$at"
@@ -16,7 +16,7 @@ do_authenticate () {
 get_pushtx_status () {
   local access_token=$1
   status=$(curl -s -H "Content-Type: application/json" "http://localhost:8081/status?at=$access_token")
-  maybe_error=$(echo "$status" | yq -e '.error' 2>/dev/null)
+  maybe_error=$(echo "$status" | jq -r '.error // empty' 2>/dev/null)
   if [ "$maybe_error" == 'Invalid JSON Web Token' ]; then
     return 1
   else
@@ -27,7 +27,7 @@ get_pushtx_status () {
 get_account_status () {
   local access_token=$1
   status=$(curl -s -H "Content-Type: application/json" "http://localhost:8080/status?at=$access_token")
-  maybe_error=$(echo "$status" | yq -e '.error' 2>/dev/null)
+  maybe_error=$(echo "$status" | jq -r '.error // empty' 2>/dev/null)
   if [ "$maybe_error" == 'Invalid JSON Web Token' ]; then
     return 1
   else
@@ -38,7 +38,7 @@ get_account_status () {
 check_token () {
   local access_token=$1
   status=$(curl -s -H "Content-Type: application/json" "http://localhost:8080/status?at=$access_token")
-  maybe_error=$(echo "$status" | yq -e '.error' 2>/dev/null)
+  maybe_error=$(echo "$status" | jq -r '.error // empty' 2>/dev/null)
   if [ "$maybe_error" == 'Invalid JSON Web Token' ]; then
     return 1
   else

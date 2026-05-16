@@ -137,10 +137,12 @@ COPY ./nginx/*.conf /etc/nginx/sites-available/
 RUN mkdir /etc/nginx/sites-enabled && \
     ln -sf /etc/nginx/sites-available/mainnet.conf /etc/nginx/sites-enabled/dojo.conf
 
-### Docker entrypoint
+### Daemon scripts
 
 COPY ./config.env /usr/local/bin/config.env
-COPY --chmod=755 ./docker_entrypoint.sh /usr/local/bin/
+COPY --chmod=755 ./db-entrypoint.sh /usr/local/bin/
+COPY --chmod=755 ./soroban-entrypoint.sh /usr/local/bin/
+COPY --chmod=755 ./backend-entrypoint.sh /usr/local/bin/
 COPY --chmod=755 ./check-synced.sh /usr/local/bin/
 COPY --chmod=755 ./check-api.sh /usr/local/bin/
 COPY --chmod=755 ./check-mysql.sh /usr/local/bin/
@@ -151,3 +153,5 @@ COPY --chmod=755 ./samourai-dojo/docker/my-dojo/soroban/restart.sh /usr/local/bi
 
 # Remove /tmp clean since it errors out nodejs 24
 RUN sed -i 's|rm -rf /tmp/\*||' /usr/local/bin/soroban-restart.sh
+
+RUN mkdir -p /run/secrets

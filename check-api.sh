@@ -4,7 +4,7 @@
 source /usr/local/bin/config.env
 source /usr/local/bin/functions.sh
 
-admin_key=$(yq -e '.admin-key' /root/start9/config.yaml 2>/dev/null)
+admin_key=$(jq -r '.dojo.adminKey' /root/store.json 2>/dev/null)
 access_token=$(cat /run/secrets/access_token 2>/dev/null)
 
 if [ -z "$access_token" ] || ! check_token "$access_token"; then
