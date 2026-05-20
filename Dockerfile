@@ -77,7 +77,7 @@ ENV SOROBAN_HOME=/home/soroban
 RUN set -ex && \
     apk --update --no-cache add ca-certificates bash && \
     apk --no-cache add shadow && \
-    apk --no-cache add mariadb mariadb-client pwgen nginx yq curl netcat-openbsd && \
+    apk --no-cache add mariadb mariadb-client pwgen nginx jq curl netcat-openbsd && \
     apk --no-cache add openssl libevent zlib runuser
 
 ### Node

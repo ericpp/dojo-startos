@@ -38,8 +38,6 @@ const dict = {
   'Soroban is ready': 34,
   'Soroban is not ready': 35,
   'Dojo API': 36,
-  'Dojo API is ready': 37,
-  'Dojo API is not ready': 38,
   'Dojo Web UI is ready': 39,
   'Dojo Web UI is not ready': 40,
   'Tor is not installed': 41,
@@ -61,6 +59,15 @@ const dict = {
   'Synced': 57,
   'Dojo is synced with the network': 58,
   'Dojo is syncing...': 59,
+  'MySQL': 60,
+  'MySQL is online and ready for connections': 61,
+  'MySQL is starting...': 62,
+  'Soroban': 63,
+  'Soroban is running': 64,
+  'Soroban is starting...': 65,
+  'Tor': 66,
+  'Web UI interface has Tor address configured': 67,
+  'Web UI interface requires a Tor address to be configured': 68,
 } as const
 
 export type I18nKey = keyof typeof dict

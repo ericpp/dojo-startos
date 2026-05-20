@@ -31,9 +31,9 @@ fi
 mkdir -p /var/lib/tor/hsv3explorer
 echo -n "$EXPLORER_ENDPOINT" > /var/lib/tor/hsv3explorer/hostname
 
-cat << EOF > /root/stats.json
+cat << EOF > /root/backend.json
 {
-  "pairingCode": '{"pairing":{"type":"dojo.api","version":"$DOJO_VERSION_TAG","apikey":"$NODE_API_KEY","url":"$PAIRING_URL"},"explorer":{"type":"explorer.btc_rpc_explorer","url":"http://$EXPLORER_ENDPOINT"}}',
+  "pairingCode": "{\"pairing\":{\"type\":\"dojo.api\",\"version\":\"$DOJO_VERSION_TAG\",\"apikey\":\"$NODE_API_KEY\",\"url\":\"$PAIRING_URL\"},\"explorer\":{\"type\":\"explorer.btc_rpc_explorer\",\"url\":\"http://$EXPLORER_ENDPOINT\"}}",
   "adminKey": "$NODE_ADMIN_KEY"
 }
 EOF

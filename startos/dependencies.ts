@@ -6,34 +6,13 @@ import { configureDojoAction } from './actions/configureDojo'
 
 export const setDependencies = sdk.setupDependencies(async ({ effects }) => {
   const config = await storeJson.read((s) => s).const(effects)
-
-  // const torAddresses = await sdk.serviceInterface
-  //   .getOwn(effects, 'ui', (i) =>
-  //     i?.addressInfo?.public
-  //       .filter({ exclude: { kind: 'domain' } })
-  //       .filter({
-  //         predicate: ({ metadata }) =>
-  //           metadata.kind === 'plugin' && metadata.packageId === 'tor',
-  //       })
-  //       .format(),
-  //   )
-  //   .const()
-
-  // if (!(torAddresses?.length ?? 0)) {
-  //   await sdk.action.createOwnTask(effects, configureDojoAction, 'critical', {
-  //     reason: i18n(
-  //       'Tor interface is not ready. Add an onion address to enable connectivity.',
-  //     ),
-  //   })
-  // }
-
   const deps: T.CurrentDependenciesResult<any> = {}
 
   if (config?.bitcoinNode?.type === 'bitcoind') {
     deps['bitcoind'] = {
       kind: 'running',
       versionRange: '>=0.21.1.2',
-      healthChecks: ['synced'],
+      healthChecks: ['bitcoind'],
     }
   }
 
@@ -41,7 +20,7 @@ export const setDependencies = sdk.setupDependencies(async ({ effects }) => {
     deps['bitcoind-testnet'] = {
       kind: 'running',
       versionRange: '>=0.21.1.2',
-      healthChecks: ['synced'],
+      healthChecks: ['bitcoind'],
     }
   }
 

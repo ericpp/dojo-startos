@@ -33,17 +33,6 @@ export async function getDaemons({ effects, config, sub }: {
   config: StoreJson,
   sub: SubContainer<typeof manifest>,
 }) {
-  const torIp = await sdk.getContainerIp(effects, { packageId: 'tor' }).const()
-
-  // track Tor running status dynamically for health check (no restart needed)
-  let torRunning = false
-  if (torIp) {
-    sdk.getStatus(effects, { packageId: 'tor' }).onChange((status) => {
-      torRunning = status?.desired.main === 'running'
-      return { cancel: false }
-    })
-  }
-
   const hasTorAddress = config.tor.announceAddrs?.some((ip: string) => ip?.includes('.onion'))
 
   return sdk.Daemons.of(effects)
@@ -54,20 +43,14 @@ export async function getDaemons({ effects, config, sub }: {
         env: {},
       },
       ready: {
-        gracePeriod: 120_000,
-        display: null,
-        fn: async () => {
-            const res = await sub.exec([
-              'mysqladmin',
-              '-u',
-              'root',
-              '--socket=/run/mysqld/mysqld.sock',
-              'ping',
-            ])
-            return res.exitCode === 0
-              ? { result: 'success', message: null }
-              : { result: 'loading', message: null }
-        },
+        display: i18n('MySQL'),
+        fn: () =>
+          runCheckScript(
+            sub,
+            'check-mysql.sh',
+            i18n('MySQL is online and ready for connections'),
+            i18n('MySQL is starting...'),
+          ),
       },
       requires: [],
     })
@@ -78,13 +61,14 @@ export async function getDaemons({ effects, config, sub }: {
         env: {},
       },
       ready: {
-        gracePeriod: 120_000,
-        display: null,
+        display: i18n('Soroban'),
         fn: () =>
-          sdk.healthCheck.checkPortListening(effects, sorobanPort, {
-            successMessage: i18n('Soroban is ready'),
-            errorMessage: i18n('Soroban is not ready'),
-          }),
+          runCheckScript(
+            sub,
+            'check-soroban.sh',
+            i18n('Soroban is running'),
+            i18n('Soroban is starting...'),
+          ),
       },
       requires: [],
     })
@@ -95,13 +79,14 @@ export async function getDaemons({ effects, config, sub }: {
         env: {},
       },
       ready: {
-        gracePeriod: 720_000,
         display: i18n('Dojo API'),
         fn: () =>
-          sdk.healthCheck.checkPortListening(effects, backendPort, {
-            successMessage: i18n('Dojo API is ready'),
-            errorMessage: i18n('Dojo API is not ready'),
-          }),
+          runCheckScript(
+            sub,
+            'check-api.sh',
+            i18n('Dojo API is online and ready for connections'),
+            i18n('Dojo API is starting...'),
+          ),
       },
       requires: ['mariadb', 'soroban'],
     })
@@ -119,19 +104,6 @@ export async function getDaemons({ effects, config, sub }: {
             successMessage: i18n('Dojo Web UI is ready'),
             errorMessage: i18n('Dojo Web UI is not ready'),
           }),
-      },
-      requires: ['backend'],
-    })
-    .addHealthCheck('api', {
-      ready: {
-        display: i18n('Dojo API'),
-        fn: () =>
-          runCheckScript(
-            sub,
-            'check-api.sh',
-            i18n('Dojo API is online and ready for connections'),
-            i18n('Dojo API is starting...'),
-          ),
       },
       requires: ['backend'],
     })
@@ -161,5 +133,19 @@ export async function getDaemons({ effects, config, sub }: {
           ),
       },
       requires: ['backend'],
+    })
+    .addHealthCheck('tor', {
+      ready: {
+        display: i18n('Tor'),
+        fn: () =>
+          hasTorAddress ? {
+            result: 'success',
+            message: i18n('Web UI interface has Tor address configured'),
+          } : {
+            result: 'failure',
+            message: i18n('Web UI interface requires a Tor address to be configured'),
+          }
+      },
+      requires: [],
     })
 }

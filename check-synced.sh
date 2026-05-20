@@ -17,7 +17,7 @@ elif [ "$bci_error" != "null" ]; then
 fi
 
 bci_block_count=$(echo "$bci_result" | jq -r '.result.blocks // "null"' 2>/dev/null)
-bci_block_ibd=$(echo "$bci_result" | jq -r '.result.initialblockdownload // "null"' 2>/dev/null)
+bci_block_ibd=$(echo "$bci_result" | jq -r '.result.initialblockdownload' 2>/dev/null)
 if [ "$bci_block_count" = "null" ]; then
   echo "Error ascertaining Bitcoin blockchain status: $bci_error" >&2
   exit 61
