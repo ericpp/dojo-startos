@@ -3,7 +3,7 @@ import { sdk } from '../sdk'
 
 const uiInterfaceId = 'ui'
 
-export const watchHosts = sdk.setupOnInit(async (effects, _) => {
+export const writeTorAddress = sdk.setupOnInit(async (effects, _) => {
   const proxy = await sdk.getContainerIp(effects, {
     packageId: 'tor'
   }).const()
@@ -15,7 +15,7 @@ export const watchHosts = sdk.setupOnInit(async (effects, _) => {
       }),
     )
     .const()
-console.log('publicInfo', publicInfo)
+
   if (!publicInfo) return
 
   const announceAddrs = publicInfo

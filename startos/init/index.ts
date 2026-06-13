@@ -4,7 +4,7 @@ import { setInterfaces } from '../interfaces'
 import { versionGraph } from '../versions'
 import { actions } from '../actions'
 import { restoreInit } from '../backups'
-import { watchHosts } from './watchHosts'
+import { writeTorAddress } from './writeTorAddress'
 
 export const init = sdk.setupInit(
   restoreInit,
@@ -12,7 +12,7 @@ export const init = sdk.setupInit(
   setInterfaces,
   setDependencies,
   actions,
-  watchHosts,
+  writeTorAddress,
 )
 
 export const uninit = sdk.setupUninit(versionGraph)
