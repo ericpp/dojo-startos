@@ -1,12 +1,12 @@
 id: dojo
 title: 'Dojo'
-version: 1.28.2.0
-release-notes: Version v1.28.0
+version: 1.29.2.0
+release-notes: Version v1.29.2
 license: AGPLv3
 wrapper-repo: 'https://github.com/ericpp/dojo-startos'
 upstream-repo: 'https://github.com/Dojo-Open-Source-Project/samourai-dojo'
-support-site: 'https://github.com/Dojo-Open-Source-Project/samourai-dojo'
-marketing-site: 'https://github.com/Dojo-Open-Source-Project/samourai-dojo'
+support-site: 'https://dojo-osp.org/'
+marketing-site: 'https://dojo-osp.org/'
 build: ['make']
 description:
   short: Your private backend server for Ashigaru, Samourai Wallet and other light wallets.

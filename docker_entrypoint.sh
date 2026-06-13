@@ -133,7 +133,7 @@ version: 2
 data:
   Pairing Code:
     type: string
-    value: '{"pairing":{"type":"dojo.api","version":"$DOJO_VERSION_TAG","apikey":"$NODE_API_KEY","url":"$PAIRING_URL"},"explorer":{"type":"explorer.btc_rpc_explorer","url":"http://$EXPLORER_ENDPOINT"}}'
+    value: '{"pairing":{"type":"dojo.api","version":"$DOJO_VERSION_TAG","apikey":"$NODE_API_KEY","url":"$PAIRING_URL"},"explorer":{"type":"explorer.mempool_space","url":"http://$EXPLORER_ENDPOINT"}}'
     description: Code for pairing your wallet with this Dojo
     copyable: true
     qr: true

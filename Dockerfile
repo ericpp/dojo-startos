@@ -1,6 +1,6 @@
 ##### Build stage
 
-FROM node:20-alpine3.20 AS builder
+FROM node:24-alpine3.23 AS builder
 
 ENV NODE_ENV=production
 ENV APP_DIR=/home/node/app
@@ -14,17 +14,17 @@ COPY ./samourai-dojo/. "$APP_DIR"
 
 # Install node modules
 RUN cd "$APP_DIR" && \
-    npm install --omit=dev --build-from-source=false
+    npm install --omit=dev
 
 ##### Tor build
 
-FROM alpine:3.22 AS torproject
+FROM alpine:3.23.3 AS torproject
 
-ENV TOR_GIT_URL=https://git.torproject.org/tor.git
-ENV TOR_VERSION=tor-0.4.8.16
+ENV TOR_GIT_URL=https://gitlab.torproject.org/tpo/core/tor.git
+ENV TOR_VERSION=tor-0.4.9.6
 
 RUN apk --update --no-cache add ca-certificates
-RUN apk --no-cache add alpine-sdk automake autoconf git
+RUN apk --no-cache add alpine-sdk automake autoconf
 RUN apk --no-cache add openssl-dev libevent-dev zlib-dev
 
 RUN git clone $TOR_GIT_URL /tor -b $TOR_VERSION --depth 1
@@ -45,9 +45,9 @@ RUN cp /stage/etc/tor/torrc.sample /stage/.torrc
 
 ##### Soroban build
 
-FROM golang:1.23-alpine3.22 AS soroban-build
+FROM golang:1.25.6-alpine3.23 AS soroban-build
 
-ENV SOROBAN_VERSION=0.4.1
+ENV SOROBAN_VERSION=0.4.2
 ENV SOROBAN_URL=https://github.com/Dojo-Open-Source-Project/soroban/archive/refs/tags/v$SOROBAN_VERSION.tar.gz
 
 RUN apk --no-cache --update add ca-certificates
@@ -68,7 +68,7 @@ RUN go build -a -tags netgo -o /stage/soroban-server ./cmd/server
 
 ##### Final stage
 
-FROM node:20-alpine3.20
+FROM node:24-alpine3.23
 
 ENV NODE_ENV=production
 ENV APP_DIR=/home/node/app
@@ -148,3 +148,6 @@ COPY --chmod=755 ./check-pushtx.sh /usr/local/bin/
 COPY --chmod=755 ./check-soroban.sh /usr/local/bin/
 COPY --chmod=755 ./functions.sh /usr/local/bin/
 COPY --chmod=755 ./samourai-dojo/docker/my-dojo/soroban/restart.sh /usr/local/bin/soroban-restart.sh
+
+# Remove /tmp clean since it errors out nodejs 24
+RUN sed -i 's|rm -rf /tmp/\*||' /usr/local/bin/soroban-restart.sh
