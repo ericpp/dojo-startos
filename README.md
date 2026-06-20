@@ -31,7 +31,7 @@ Dojo is self-hosted Bitcoin backend server that powers Ashigaru, Samourai Wallet
 
 ## Dependencies
 
-Install the system dependencies below to build this project by following the instructions in the provided links. You can find instructions on how to set up the appropriate build environment in the [Developer Docs](https://docs.start9.com/latest/developer-docs/packaging).
+Install the system dependencies below to build this project by following the instructions in the provided links. You can find instructions on how to set up the appropriate build environment in the [Developer Docs](https://docs.start9.com/0.3.5.x/developer-docs/packaging.html).
 
 - [docker](https://docs.docker.com/get-docker)
 - [docker-buildx](https://docs.docker.com/buildx/working-with-buildx/)
