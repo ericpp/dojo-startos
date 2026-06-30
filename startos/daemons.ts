@@ -54,6 +54,20 @@ export async function getDaemons({ effects, config, sub }: {
       },
       requires: [],
     })
+    .addHealthCheck('tor', {
+      ready: {
+        display: i18n('Tor'),
+        fn: () =>
+          hasTorAddress ? {
+            result: 'success',
+            message: i18n('Dojo API interface has Tor address configured'),
+          } : {
+            result: 'failure',
+            message: i18n('Dojo API interface requires a Tor address to be configured'),
+          }
+      },
+      requires: [],
+    })
     .addDaemon('soroban', {
       subcontainer: sub,
       exec: {
@@ -70,7 +84,7 @@ export async function getDaemons({ effects, config, sub }: {
             i18n('Soroban is starting...'),
           ),
       },
-      requires: [],
+      requires: ['tor'],
     })
     .addDaemon('backend', {
       subcontainer: sub,
@@ -88,7 +102,7 @@ export async function getDaemons({ effects, config, sub }: {
             i18n('Dojo API is starting...'),
           ),
       },
-      requires: ['mariadb', 'soroban'],
+      requires: ['mariadb', 'soroban', 'tor'],
     })
     .addDaemon('frontend', {
       subcontainer: sub,
@@ -133,19 +147,5 @@ export async function getDaemons({ effects, config, sub }: {
           ),
       },
       requires: ['backend'],
-    })
-    .addHealthCheck('tor', {
-      ready: {
-        display: i18n('Tor'),
-        fn: () =>
-          hasTorAddress ? {
-            result: 'success',
-            message: i18n('Web UI interface has Tor address configured'),
-          } : {
-            result: 'failure',
-            message: i18n('Web UI interface requires a Tor address to be configured'),
-          }
-      },
-      requires: [],
     })
 }
