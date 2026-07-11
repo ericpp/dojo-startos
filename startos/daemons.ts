@@ -60,10 +60,10 @@ export async function getDaemons({ effects, config, sub }: {
         fn: () =>
           hasTorAddress ? {
             result: 'success',
-            message: i18n('Dojo API interface has Tor address configured'),
+            message: i18n('Web UI interface has Tor address configured'),
           } : {
             result: 'failure',
-            message: i18n('Dojo API interface requires a Tor address to be configured'),
+            message: i18n('Web UI interface requires a Tor address to be configured'),
           }
       },
       requires: [],
