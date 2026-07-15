@@ -3,8 +3,8 @@ import { readFile, rm } from 'fs/promises'
 import { storeJson } from '../fileModels/store.json'
 import { generateKey } from '../utils'
 
-export const v_1_29_2_0 = VersionInfo.of({
-  version: '1.29.2:0',
+export const v_1_29_2_1 = VersionInfo.of({
+  version: '1.29.2:1',
   releaseNotes: {
     en_US: 'Initial release on StartOS SDK 0.4.0',
   },
