@@ -18,7 +18,7 @@ export const setInterfaces = sdk.setupInterfaces(async ({ effects }) => {
     masked: false,
     schemeOverride: null,
     username: null,
-    path: '/admin',
+    path: '/admin/',
     query: {},
   })
 
@@ -30,7 +30,7 @@ export const setInterfaces = sdk.setupInterfaces(async ({ effects }) => {
     masked: false,
     schemeOverride: null,
     username: null,
-    path: '/v2',
+    path: '/v2/',
     query: {},
   })
 
