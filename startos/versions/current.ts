@@ -59,43 +59,23 @@ const legacyStore = FileHelper.json(
 )
 
 export const current = VersionInfo.of({
-  version: '1.29.2:2',
+  version: '1.29.2:3',
   releaseNotes: {
-    en_US: `Rebuilt for StartOS 0.4 on start-sdk 2.0.
+    en_US: `Requires an up-to-date Bitcoin.
 
-- Bitcoin, the indexer and Tor are now reached over the container bridge, so Dojo keeps working when their ports move.
-- Database backups are taken from a consistent dump instead of a copy of the live data directory.
-- Your API key, admin key and JWT secret are generated once and kept, so a restart no longer changes your pairing code.
-- Testnet4 now talks to Bitcoin on its own RPC and ZeroMQ ports.
-- Adds an action to view your admin key alongside the pairing code.`,
-    es_ES: `Reconstruido para StartOS 0.4 sobre start-sdk 2.0.
+Dojo needs pruning disabled and the transaction index and ZeroMQ enabled on Bitcoin, and asks for that through settings older Bitcoin releases do not have. The version Dojo required did not rule those out, so on an out-of-date Bitcoin the Auto-Configure task opened a form that could not be submitted, and came back no matter what you did. Dojo now requires the current revision of whichever Bitcoin version line you are on, so an out-of-date Bitcoin is reported as needing an update instead.`,
+    es_ES: `Exige un Bitcoin actualizado.
 
-- Bitcoin, el indexador y Tor ahora se alcanzan a través del puente de contenedores, así que Dojo sigue funcionando cuando cambian sus puertos.
-- Las copias de seguridad de la base de datos se toman de un volcado consistente en lugar de una copia del directorio de datos en uso.
-- Tu clave de API, tu clave de administración y tu secreto JWT se generan una vez y se conservan, de modo que un reinicio ya no cambia tu código de emparejamiento.
-- Testnet4 ahora habla con Bitcoin en sus propios puertos RPC y ZeroMQ.
-- Añade una acción para ver tu clave de administración junto al código de emparejamiento.`,
-    de_DE: `Neu gebaut für StartOS 0.4 auf start-sdk 2.0.
+Dojo necesita que la poda esté desactivada y el índice de transacciones y ZeroMQ activados en Bitcoin, y lo solicita mediante ajustes que las versiones antiguas de Bitcoin no tienen. La versión que Dojo exigía no las descartaba, así que en un Bitcoin desactualizado la tarea Auto-Configurar abría un formulario que no se podía enviar y volvía a aparecer hiciera lo que hiciera. Ahora Dojo exige la revisión actual de la línea de versiones de Bitcoin que uses, de modo que un Bitcoin desactualizado se señala como pendiente de actualizar.`,
+    de_DE: `Setzt ein aktuelles Bitcoin voraus.
 
-- Bitcoin, der Indexer und Tor werden jetzt über die Container-Bridge erreicht, sodass Dojo weiterläuft, wenn sich deren Ports ändern.
-- Datenbank-Backups werden aus einem konsistenten Dump erstellt statt aus einer Kopie des laufenden Datenverzeichnisses.
-- Dein API-Schlüssel, dein Admin-Schlüssel und dein JWT-Secret werden einmal erzeugt und behalten, sodass ein Neustart deinen Pairing-Code nicht mehr ändert.
-- Testnet4 spricht jetzt über seine eigenen RPC- und ZeroMQ-Ports mit Bitcoin.
-- Fügt eine Aktion hinzu, um deinen Admin-Schlüssel neben dem Pairing-Code anzuzeigen.`,
-    pl_PL: `Przebudowane dla StartOS 0.4 na start-sdk 2.0.
+Dojo benötigt Bitcoin ohne Pruning und mit aktiviertem Transaktionsindex und ZeroMQ und fordert das über Einstellungen an, die ältere Bitcoin-Ausgaben nicht haben. Die von Dojo geforderte Version schloss diese nicht aus, sodass auf einem veralteten Bitcoin die Aufgabe „Auto-Konfiguration“ ein Formular öffnete, das sich nicht absenden ließ, und immer wieder zurückkam. Dojo verlangt jetzt die aktuelle Revision der von dir genutzten Bitcoin-Versionsreihe, sodass ein veraltetes Bitcoin stattdessen als aktualisierungsbedürftig gemeldet wird.`,
+    pl_PL: `Wymaga aktualnego Bitcoina.
 
-- Bitcoin, indekser i Tor są teraz osiągane przez mostek kontenerów, więc Dojo działa dalej, gdy zmienią się ich porty.
-- Kopie zapasowe bazy danych powstają ze spójnego zrzutu zamiast kopii działającego katalogu danych.
-- Twój klucz API, klucz administratora i sekret JWT są generowane raz i zachowywane, więc restart nie zmienia już kodu parowania.
-- Testnet4 rozmawia teraz z Bitcoinem na własnych portach RPC i ZeroMQ.
-- Dodaje akcję pozwalającą zobaczyć klucz administratora obok kodu parowania.`,
-    fr_FR: `Reconstruit pour StartOS 0.4 sur start-sdk 2.0.
+Dojo wymaga wyłączonego przycinania oraz włączonego indeksu transakcji i ZeroMQ w Bitcoinie i prosi o to poprzez ustawienia, których starsze wydania Bitcoina nie mają. Wersja wymagana przez Dojo ich nie wykluczała, więc na nieaktualnym Bitcoinie zadanie Auto-Konfiguracja otwierało formularz, którego nie dało się wysłać, i wracało niezależnie od podjętych działań. Dojo wymaga teraz bieżącej rewizji tej linii wydań Bitcoina, z której korzystasz, więc nieaktualny Bitcoin jest zgłaszany jako wymagający aktualizacji.`,
+    fr_FR: `Exige un Bitcoin à jour.
 
-- Bitcoin, l'indexeur et Tor sont désormais joints via le pont de conteneurs, donc Dojo continue de fonctionner lorsque leurs ports changent.
-- Les sauvegardes de la base de données proviennent d'un export cohérent plutôt que d'une copie du répertoire de données en cours d'utilisation.
-- Votre clé d'API, votre clé d'administration et votre secret JWT sont générés une seule fois et conservés, si bien qu'un redémarrage ne change plus votre code d'appairage.
-- Testnet4 dialogue maintenant avec Bitcoin sur ses propres ports RPC et ZeroMQ.
-- Ajoute une action pour consulter votre clé d'administration à côté du code d'appairage.`,
+Dojo a besoin que l'élagage soit désactivé et que l'index des transactions et ZeroMQ soient activés sur Bitcoin, et le demande via des réglages que les anciennes versions de Bitcoin n'ont pas. La version exigée par Dojo ne les excluait pas : sur un Bitcoin obsolète, la tâche Auto-Configuration ouvrait un formulaire impossible à envoyer et revenait quoi que vous fassiez. Dojo exige désormais la révision actuelle de la ligne de versions de Bitcoin que vous utilisez, de sorte qu'un Bitcoin obsolète est signalé comme devant être mis à jour.`,
   },
   migrations: {
     up: async ({ effects }) => {

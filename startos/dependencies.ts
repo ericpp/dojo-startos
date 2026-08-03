@@ -55,7 +55,8 @@ export const setDependencies = sdk.setupDependencies(async ({ effects }) => {
             // tracks Core's majors, so a floor above its current line stops
             // excluding it the moment it catches up.
             kind: 'running',
-            versionRange: '>=28.4:17 && !#knots && !#knotsprerdts',
+            versionRange:
+              '((>=28.4:17 && <29) || (>=29.4:4 && <30) || (>=30.3:4 && <31) || >=31.1:4) && !#knots && !#knotsprerdts',
             healthChecks: ['bitcoind'],
           },
         }),
