@@ -4,16 +4,15 @@
 
 # Dojo on StartOS
 
-> **Upstream docs:** <https://dojo-osp.org/>
->
 > Everything not listed in this document should behave the same as upstream
 > Dojo. If a feature, setting, or behavior is not mentioned here, the upstream
-> documentation is accurate and fully applicable.
+> documentation is accurate and fully applicable — see the Documentation
+> section of `instructions.md` for links.
 
-Dojo is the backend server for Ashigaru, Samourai Wallet and other light wallets. It tracks HD
-account and BIP47 balances and transaction histories, serves unspent output lists to the wallet,
-and broadcasts transactions through the user's own Bitcoin node. Upstream:
-[Dojo-Open-Source-Project/samourai-dojo](https://github.com/Dojo-Open-Source-Project/samourai-dojo).
+[Dojo](https://github.com/Dojo-Open-Source-Project/samourai-dojo) is a personal Bitcoin backend: wallets pair to it and query their own history through it, instead of through someone else's server. This package runs Dojo's whole stack in one container, lets you pick which Bitcoin node and which indexer it reads from, and manages the secrets that make up its pairing code.
+
+- **Upstream repo:** <https://github.com/Dojo-Open-Source-Project/samourai-dojo>
+- **Wrapper repo:** <https://github.com/Start9-Community/dojo-startos>
 
 ---
 
@@ -21,233 +20,205 @@ and broadcasts transactions through the user's own Bitcoin node. Upstream:
 
 - [Image and Container Runtime](#image-and-container-runtime)
 - [Volume and Data Layout](#volume-and-data-layout)
-- [Installation and First-Run Flow](#installation-and-first-run-flow)
-- [Configuration Management](#configuration-management)
-- [Network Access and Interfaces](#network-access-and-interfaces)
-- [Actions (StartOS UI)](#actions-startos-ui)
-- [Backups and Restore](#backups-and-restore)
-- [Health Checks](#health-checks)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Actions](#actions)
+- [Tasks](#tasks)
+- [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
-- [Contributing](#contributing)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
 ## Image and Container Runtime
 
-One image, built from the `Dockerfile` at the repository root for `x86_64` and `aarch64`. It has
-three build stages beyond the runtime layer: Dojo's own `npm install` against the `samourai-dojo`
-submodule, Tor from source (for Soroban's onion service), and Soroban from source.
+One image, built here, running four daemons.
 
-Upstream ships Dojo as a docker-compose stack of separate containers — node, db, nginx, tor,
-soroban, and an explorer. This package collapses that into one image and runs four StartOS daemons
-inside a **single shared subcontainer**, because the upstream components address each other over
-`127.0.0.1`:
+| Property      | Value                               |
+| ------------- | ----------------------------------- |
+| Image         | Built from this repo's `Dockerfile` |
+| Architectures | x86_64, aarch64                     |
+| Command       | Per daemon, from mounted scripts    |
 
-| Daemon     | Command                          | What it runs                               |
-| ---------- | -------------------------------- | ------------------------------------------ |
-| `mariadb`  | `/assets/db-entrypoint.sh`       | MariaDB, initialised and migrated on start |
-| `soroban`  | `/assets/soroban-entrypoint.sh`  | The Soroban server, as the `soroban` user  |
-| `backend`  | `/assets/backend-entrypoint.sh`  | Dojo's API, tracker and pushtx under pm2   |
-| `frontend` | `/assets/frontend-entrypoint.sh` | nginx, fronting all three                  |
+| Subcontainer | Purpose                                   |
+| ------------ | ----------------------------------------- |
+| `dojo-sub`   | All four daemons — the one to `attach` to |
 
-Those entrypoints and the health scripts live in `assets/` and are mounted read-only at `/assets`
-rather than copied into the image, so editing one does not rebuild the Tor and Soroban source
-stages. Each sources `/assets/config.env`, the package's only translation layer between StartOS and
-upstream (see [Configuration Management](#configuration-management)). Upstream's
-`docker_entrypoint.sh` equivalent — a single script starting every process — is not used.
+The four daemons are MariaDB, Soroban, Dojo's API backend, and the nginx front end. They share the one subcontainer and the service network namespace.
+
+**The entrypoint and health scripts are mounted from assets, not baked into the image.** Editing one would otherwise mean rebuilding a Dockerfile that compiles Tor and Soroban from source — so the scripts are a mount and a rebuild is not needed to change them.
 
 ## Volume and Data Layout
 
-| Volume | Mountpoint       | Contents                                                    |
-| ------ | ---------------- | ----------------------------------------------------------- |
-| `main` | `/data`          | `store.json` (package state), `backend.json` (pairing code) |
-| `db`   | `/var/lib/mysql` | The MariaDB data directory                                  |
+Two volumes, plus a read-only view of Bitcoin's.
 
-The selected Bitcoin node's `main` volume is also mounted read-only at `/mnt/bitcoin`, purely so
-Dojo can read the RPC cookie. Its path within the volume differs between mainnet and testnet4 and
-is imported from the Bitcoin package rather than hardcoded.
+| Volume                | Mount Point      | Purpose                                       |
+| --------------------- | ---------------- | --------------------------------------------- |
+| `main`                | `/data`          | Dojo's state, the store, and the pairing data |
+| `db`                  | `/var/lib/mysql` | MariaDB's data directory                      |
+| Bitcoin's `main` (ro) | `/mnt/bitcoin`   | The RPC cookie                                |
 
-`store.json` holds everything the user configures plus the three generated secrets. Dojo's own
-`keys/index.js` is generated from environment variables at container start and is not persisted.
+The database is on its own volume because it is backed up differently — see [Backups and Restore](#backups-and-restore).
 
-## Installation and First-Run Flow
+## File Models
 
-Upstream expects the operator to fill in a `.env` file before first launch. This package generates
-the equivalent instead:
+Two models: one the package owns, and one the container writes for the package to read.
 
-- **The API key, admin key and JWT secret are generated once on install** and written to
-  `store.json`. They are not regenerated on restart, so the pairing code stays stable. The user can
-  overwrite any of them with the **Configure Dojo** action.
-- **Bitcoin and the indexer are configured through StartOS dependencies.** A critical task is
-  raised against the selected Bitcoin node requiring pruning disabled and txindex and ZeroMQ
-  enabled, prefilled so the user can accept it in one step.
-- **The service will not start until a Tor address exists** on Dojo's binding. Dojo's pairing
-  payload is its onion URL, so there is nothing useful to serve without one; the **Tor Address**
-  health check states this and gates the `backend` daemon.
+| File           | Format | Modelled                | Written by           |
+| -------------- | ------ | ----------------------- | -------------------- |
+| `store.json`   | JSON   | Yes — `FileHelper.json` | Init and the actions |
+| `backend.json` | JSON   | Yes — `FileHelper.json` | The backend daemon   |
 
-## Configuration Management
+**`store.json`** holds the node and indexer selections, Dojo's three secrets, and the Soroban and broadcast settings.
 
-| StartOS-Managed                                                                                                                                                | Upstream-Managed                                                                           |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Bitcoin node selection, indexer selection, API/admin/JWT keys, BIP47 payment code, Soroban announce and PandoTx settings, and every network address Dojo dials | Everything else in Dojo's own configuration, and all runtime state in the maintenance tool |
+**The three secrets are seeded at init, deliberately not defaulted.** A generated `.catch()` default is evaluated per process and never written back — which would hand out a different API key on every restart and silently change the user's pairing code. So they are minted once and persisted, and an empty value means "not generated yet" rather than a usable key.
 
-`main.ts` resolves Bitcoin's RPC and ZeroMQ endpoints, the indexer's Electrum endpoint and Tor's
-SOCKS proxy with `sdk.host.getBridgeAddress`, and passes them — along with the user's settings —
-to every daemon as `S9_*` environment variables. `config.env` maps those onto the names Dojo
-actually reads.
+**`backend.json` carries the pairing code, and it is written from inside the container** because the payload embeds Dojo's own version tag, which only the image knows. The package reads it back out for the action rather than assembling it.
 
-The ordering inside `config.env` is load-bearing: it sources upstream's `docker/my-dojo/.env`
-first, for Dojo's own defaults, and applies the StartOS-resolved values after it. Setting an
-upstream variable name directly from `main.ts` would be overwritten by that source.
-
-The StartOS-managed environment variables are:
-
-| Variable                                        | Resolved from                                 |
-| ----------------------------------------------- | --------------------------------------------- |
-| `S9_BITCOIN_RPC_HOST` / `S9_BITCOIN_RPC_PORT`   | The Bitcoin node's `rpc` host over the bridge |
-| `S9_BITCOIN_ZMQ_BLOCK` / `S9_BITCOIN_ZMQ_TX`    | The Bitcoin node's `zmq` host over the bridge |
-| `S9_BITCOIN_COOKIE` / `S9_BITCOIN_NETWORK`      | The selected node's cookie path and chain     |
-| `S9_INDEXER_HOST` / `S9_INDEXER_PORT`           | The indexer's Electrum host over the bridge   |
-| `S9_TOR_SOCKS_HOST` / `S9_TOR_SOCKS_PORT`       | Tor's SOCKS binding over the bridge           |
-| `S9_TOR_ADDRESS`                                | The onion address on Dojo's binding           |
-| `S9_API_KEY` / `S9_ADMIN_KEY` / `S9_JWT_SECRET` | `store.json`, generated on install            |
-| `S9_PAYMENT_CODE`                               | `store.json`, set by the user                 |
-| `S9_SOROBAN_ANNOUNCE` / `S9_PANDOTX_*`          | `store.json`, set by the user                 |
-| `S9_DATA_DIR`                                   | The `main` volume mountpoint                  |
-
-## Network Access and Interfaces
-
-| Interface | Type  | Port | Path     | Purpose                                 |
-| --------- | ----- | ---- | -------- | --------------------------------------- |
-| `ui`      | `ui`  | 9000 | `/admin` | The Dojo Maintenance Tool, in a browser |
-| `api`     | `api` | 9000 | `/v2`    | The endpoint wallets pair to and query  |
-
-Both are exported on the **same** binding, so they share whatever addresses the user adds. They are
-separate interfaces because they serve different audiences — a person opens one, a wallet pairs to
-the other — and because `/v2` is the URL the pairing code actually carries, which makes it the
-address a user needs to see. nginx is the only listener bound to the port. It proxies `/v2/` to the accounts API,
-`/v2/pushtx/` and `/v2/tracker/` to their own upstream processes, `/admin/` to the maintenance
-tool, and redirects `/` to `/admin/`. MariaDB, Soroban and the three Node processes stay on
-loopback inside the container.
-
-The interface's host id is `main` and its interface id is `ui`. Where it is reachable — LAN, a
-`.local` name, an onion address, a custom domain — is the user's choice, made in StartOS.
-
-## Actions (StartOS UI)
-
-| Action                  | Group         | Availability | Input                                                                | Output                        |
-| ----------------------- | ------------- | ------------ | -------------------------------------------------------------------- | ----------------------------- |
-| **Select Bitcoin Node** | Configuration | Any status   | Bitcoin or Bitcoin (testnet4)                                        | —                             |
-| **Select Indexer**      | Configuration | Any status   | Fulcrum or Electrs                                                   | —                             |
-| **Configure Dojo**      | Configuration | Any status   | Payment code, API/admin/JWT keys, Soroban announce, PandoTx settings | —                             |
-| **View Pairing Code**   | Credentials   | Only running | —                                                                    | Pairing code (QR) + admin key |
-
-All four are `visibility: 'enabled'`. Selecting a node or indexer rewrites the declared dependency,
-so StartOS prompts to install the newly selected one and drops the old requirement.
-
-**View Pairing Code** reads `backend.json`, which the `backend` daemon writes at startup — hence
-"only running". The payload it returns is the one the maintenance tool's own Pairing screen builds:
-Dojo's `/support/pairing` response plus the API URL a browser would have filled in from its
-location.
-
-## Backups and Restore
-
-The `db` volume is dumped with `mysqldump` rather than copied, because MariaDB writes its data
-directory continuously while Dojo runs and an rsync of it would be torn. The backup therefore holds
-a single `samourai-main-db.dump` in place of the data directory, alongside an rsync of the `main`
-volume — so `store.json`, and with it the API key, admin key and JWT secret, survives a restore.
-
-On restore, Dojo replays its own database migrations at startup and resumes tracking from the last
-indexed block; it does not rescan from genesis.
-
-The Tor address is not carried in this backup — it belongs to the interface's host and its key is
-held by the Tor service — but on the same server it is re-attached to the restored interface, so
-the pairing code stays valid. **Tor Address** reports failure for the short window before that
-happens, and the `backend` daemon waits on it.
-
-## Health Checks
-
-| Check                     | Kind       | Method                                                             |
-| ------------------------- | ---------- | ------------------------------------------------------------------ |
-| **Tor Address**           | Standalone | An onion address is present on Dojo's binding                      |
-| **Bitcoin Client**        | Standalone | Bitcoin's `getnetworkinfo` subversion is one Dojo supports         |
-| **Database**              | `mariadb`  | `mysqladmin ping` (2 min grace)                                    |
-| **Soroban**               | `soroban`  | `soroban-server` is running and listening                          |
-| **Dojo API**              | `backend`  | Authenticated `GET /status` against the accounts API (2 min grace) |
-| **Web Server**            | `frontend` | Port 9000 is bound (2 min grace)                                   |
-| **Transaction Broadcast** | Standalone | Authenticated `GET /status` against the pushtx API                 |
-| **Sync Progress**         | Standalone | Dojo's tracked height against Bitcoin's (12 min grace)             |
-
-The shell health scripts report more than pass/fail through their exit code — `0` healthy, `60` not
-up yet, `62` broken and needing the user, anything else up but not yet usable — so a service that is
-catching up reports progress rather than failure, and one that cannot proceed says why. `Dojo API`
-gates on `Tor Address`, `Bitcoin Client`, `Database` and `Soroban`; `Web Server` gates on `Dojo API`.
+Dojo's own configuration is not modelled. Everything the package needs to set is passed as environment under `S9_`-prefixed names, and a config script inside the container maps those onto the names Dojo actually reads. **That indirection is load-bearing**: the script sources upstream's own defaults, which would overwrite anything set directly under the upstream names.
 
 ## Dependencies
 
-| Dependency             | Required | Health checks required | Purpose                                                                                                                                                                    |
-| ---------------------- | -------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tor**                | Yes      | `tor`                  | Publishes the onion wallets pair to, and carries Dojo's outbound traffic                                                                                                   |
-| **Bitcoin**            | Optional | `bitcoind`             | Blockchain data over RPC, block and transaction events over ZeroMQ, and transaction broadcast. Its `main` volume is mounted read-only at `/mnt/bitcoin` for the RPC cookie |
-| **Bitcoin (testnet4)** | Optional | `bitcoind`             | The same, against testnet4                                                                                                                                                 |
-| **Fulcrum**            | Optional | `primary`              | Address lookups and rescans                                                                                                                                                |
-| **Electrs**            | Optional | `electrs`              | Address lookups and rescans                                                                                                                                                |
+Five declared, and which are actually required depends on two selections.
 
-Exactly one Bitcoin flavor and one indexer are declared at a time, following the user's selection;
-the version floors live in `startos/dependencies.ts`. Only the daemon-level health check is
-required of the indexer, not its sync check — Dojo reports its own import progress, and waiting for
-a first index would leave the service unavailable for hours.
+| Dependency       | Role                                   |
+| ---------------- | -------------------------------------- |
+| Tor              | **Always required**, `kind: 'running'` |
+| Bitcoin          | Required when mainnet is selected      |
+| Bitcoin testnet4 | Required when testnet is selected      |
+| Fulcrum          | Required when selected as the indexer  |
+| Electrs          | Required when selected as the indexer  |
 
-Bitcoin (testnet4) is [`remcoros/bitcoind-testnet4-startos`](https://github.com/remcoros/bitcoind-testnet4-startos),
-a community fork of the Start9 Bitcoin Core package. It is not published in a Start9 registry.
+Exactly one Bitcoin node and one indexer are required at a time; the manifest marks them optional because the choice is the user's.
+
+**Bitcoin needs three settings, and the package raises a recurring task for them.** Dojo reads raw transactions over RPC and subscribes to blocks over ZeroMQ, and a pruned or unindexed node can serve neither. The task is declared to recur rather than fire once, so turning any of them back off brings it back.
+
+**Bitcoin Knots is excluded, by flavor rather than by version.** Dojo exits on any node whose subversion contains "Knots", so both Knots flavors are ruled out in the dependency range itself — a crash-loop in the accounts API is otherwise the only symptom. It is excluded by flavor because Knots tracks Core's majors, so a version floor would stop excluding it the moment Knots caught up.
+
+**The indexer only has to be answering, not fully indexed.** Blocking start-up on a first index would leave the service unavailable for hours, and Dojo reports its own import progress anyway.
+
+The Bitcoin RPC address is pinned to the plaintext leg, as is the indexer's — both publish a plaintext and a TLS address, and Dojo speaks the plain one.
+
+## Network Access and Interfaces
+
+**Two interfaces on one port**, because nginx fronts both.
+
+| Interface        | Id    | Type | Port | Path      | Description                    |
+| ---------------- | ----- | ---- | ---- | --------- | ------------------------------ |
+| Maintenance Tool | `ui`  | ui   | 9000 | `/admin/` | Dojo's admin interface         |
+| Wallet API       | `api` | api  | 9000 | `/v2/`    | What wallets pair to and query |
+
+They are separate interfaces because they have different audiences — a person opens one in a browser, a wallet pairs to the other — and because the API path is the URL the pairing code actually carries.
+
+**Wallets pair over Tor, and a Tor address is effectively required.** Dojo cannot issue a pairing code without one, which is why the package raises a health check about it rather than leaving the user to discover an empty code.
+
+The host id is kept from the pre-2.0 package deliberately: it carries the user's onion address, and renaming it would orphan that address and break every paired wallet.
+
+## Installation and First-Run Flow
+
+Install mints Dojo's three secrets and seeds the rest of the store, so the container's entrypoints always find a complete file.
+
+Then the ordering is dictated by the dependencies rather than by the package:
+
+1. **Add a Tor address** to a Dojo interface. Without one there is no pairing code.
+2. **Satisfy Bitcoin's settings** — the task will be waiting on Bitcoin's own page.
+3. **Choose the node and the indexer** if the defaults are not what you want.
+
+The service starts the database, then Soroban, then the backend, then the front end. Several of those carry long grace periods because a first start includes database initialization, and the sync check's grace is measured in minutes because Dojo's initial import genuinely takes that long.
+
+## Actions
+
+Four actions, in two groups.
+
+### Select Bitcoin Node — Configuration
+
+Chooses mainnet Bitcoin or testnet4. Run it once, before pairing anything.
+
+- **What it changes:** the selection in the store — and with it the declared dependency, the mounted cookie, the RPC and ZeroMQ addresses, and which node the autoconfig task targets.
+- **Cost:** the service restarts and reconnects.
+- **Repeat safety:** idempotent, but **switching networks is not a migration** — Dojo's database is keyed to one chain, and moving it invalidates the imported history.
+
+### Select Indexer — Configuration
+
+Chooses Fulcrum or Electrs.
+
+- **What it changes:** the selection in the store, the declared dependency, and the address Dojo reads from.
+- **Cost:** the service restarts.
+- **Repeat safety:** idempotent. Both serve the same protocol, so switching is a genuine swap rather than a migration.
+
+### Configure Dojo — Configuration
+
+Everything else: the BIP47 payment code, the three secrets, and the Soroban and broadcast behavior.
+
+- **What it changes:** the corresponding fields in the store.
+- **Cost:** the service restarts.
+- **Changing a secret changes the pairing code**, so every paired wallet has to be re-paired. That is the one setting here with a cost outside this service.
+- **Soroban announcement and transaction relay are separate switches**, and relaying is only meaningful when announcing.
+
+### View Pairing Code — Credentials
+
+Shows the code a wallet scans, plus the admin key.
+
+- **When to run it:** only while the service is running — the code is written by the backend at start-up.
+- **What it changes:** nothing. It is a read.
+- **Repeat safety:** read-only, and stable: the same code until a secret changes.
+- **It returns nothing useful without a Tor address**, since the code is built around the onion.
+
+## Tasks
+
+One, and it appears on **Bitcoin's** page rather than this one.
+
+| Task                     | Severity   | Raised when                           | Cleared when                   |
+| ------------------------ | ---------- | ------------------------------------- | ------------------------------ |
+| Bitcoin's Auto-Configure | `critical` | Bitcoin lacks the settings Dojo needs | Bitcoin's settings are changed |
+
+It requires pruning off, the transaction index on, and ZeroMQ on. It is declared **recurring**, so it comes back if any of the three is turned off again — it is a standing requirement, not a setup step.
+
+It follows the node selection: choosing testnet retargets the task at the testnet package.
+
+## Health Checks
+
+Six checks. Four are daemons, two are conditions the daemons cannot report.
+
+| Check            | Displayed as            | Method                                | Grace / cadence        |
+| ---------------- | ----------------------- | ------------------------------------- | ---------------------- |
+| `mariadb`        | "Database"              | The database is answering             | 120s grace             |
+| `soroban`        | "Soroban"               | The Soroban daemon                    | default                |
+| `backend`        | "Dojo API"              | The API is answering                  | 120s grace             |
+| `frontend`       | "Web Server"            | nginx is serving                      | 120s grace             |
+| `tor-address`    | "Tor Address"           | Whether an onion address exists       | polled every 30s       |
+| `bitcoin-client` | "Bitcoin Client"        | Whether Bitcoin is a supported client | 30s, 5s while starting |
+| `pushtx`         | "Transaction Broadcast" | The broadcast path                    | default                |
+| `synced`         | "Sync Progress"         | Dojo's own import progress            | 720s grace             |
+
+**"Tor Address" failing is a prompt, not a fault.** It tells the user to add an onion address, because without one Dojo cannot issue a pairing code. It polls on a fixed 30-second cooldown rather than the default failure cadence — the address only changes on a restart, and re-reporting it every second floods the log while the user goes to add one.
+
+**"Bitcoin Client" is what catches an unsupported node** before it presents as a crash-looping accounts API. It also polls slowly on purpose: each poll is an RPC round trip, and an unsupported client stays unsupported until the user changes it.
+
+**"Sync Progress" has a twelve-minute grace** because Dojo's initial import is genuinely long. A new install sitting in that state is working, not stuck.
+
+## Backups and Restore
+
+**The database is dumped; everything else is copied.** `sdk.Backups.withMysqlDump` handles MariaDB and the `main` volume is added alongside.
+
+MariaDB writes its data directory continuously while Dojo runs, so copying those files produces a torn database. A logical dump is consistent, and it also survives a future engine bump instead of being tied to the on-disk format it was taken with. **The `db` volume's files are never captured** — a restore starts the engine and replays the dump into it.
+
+The `main` volume carries the store, so **the secrets and therefore the pairing code survive a restore** and wallets stay paired — provided the Tor address does too.
+
+A restored instance needs its dependencies present on the new server, and re-imports nothing: the database comes back with its history.
 
 ## Limitations and Differences
 
-1. **A Tor address is required.** Dojo's pairing payload is its onion URL. Until the user adds a
-   Tor address to Dojo's binding, the `backend` daemon does not start.
-2. **The block explorer is mempool.space's public onion, not a local one.** Upstream's compose
-   stack runs an explorer container alongside Dojo; this package ships none and advertises
-   mempool.space's hidden service in the pairing payload instead. Transaction lookups the wallet
-   makes through that link go to a third party over Tor.
-3. **Switching between mainnet and testnet4 is not a migration.** The database is built for one
-   chain. Changing the selection on a Dojo that has already tracked wallets leaves it pointed at a
-   chain its data does not match.
-4. **Bitcoin must be unpruned with txindex and ZeroMQ enabled.** Dojo reads raw transactions over
-   RPC and subscribes to block events. The critical task raised on install sets this.
-5. **Bitcoin Knots is not supported — by upstream policy, not by capability.**
-   `lib/bitcoind-rpc/rpc-client.js` matches `getnetworkinfo`'s subversion against the literal
-   string `Knots` and calls `process.exit(0)`; there is no version comparison and no feature probe.
-   Left alone the accounts API crash-loops. The `bitcoind` dependency range therefore excludes both
-   Knots flavors, and the **Bitcoin Client** health check states the reason and holds the `backend`
-   daemon. Excluded by flavor rather than a version floor because the upstream rule has no version
-   axis: every Knots build is refused, so a floor above whatever line Knots currently ships would
-   stop excluding it the moment it caught up.
-6. **Upstream's Knots peer-banning is not carried over.** my-dojo runs its own `bitcoind` and, when
-   `BITCOIND_BAN_KNOTS` is on, runs `ban-knots.sh` against it every ten minutes — enumerating peers
-   and `setban`-ing any whose subversion contains `Knots` until 2030. This package ships no Bitcoin
-   node and never invokes that script, so it cannot and does not modify the peer list or ban list of
-   the node it connects to.
-7. **No bundled Bitcoin node or indexer.** Upstream can install its own; here both are StartOS
-   dependencies, so Dojo shares the node and indexer the rest of the server already uses.
-8. **Soroban's onion service is served by the Tor daemon built into this image**, not by the
-   StartOS Tor service, which handles Dojo's own interfaces instead.
-
-## What Is Unchanged from Upstream
-
-- The Dojo API, tracker and pushtx processes, and the pm2 configuration that supervises them.
-- The database schema and Dojo's own migration scripts, which run on every start.
-- The Dojo Maintenance Tool, including its pairing, transaction and API-key screens.
-- The nginx routing map, taken from upstream with only the listening port changed.
-- PandoTx and Soroban behavior, including announce, relay, retries and fallback semantics.
-- BIP44/49/84 derivation, BIP47 payment codes, and Ricochet, Stonewall, StonewallX2 and Stowaway
-  support.
-
-## Contributing
-
-See [AGENTS.md](AGENTS.md).
+1. **Bitcoin Knots is not supported.** Dojo exits on it, so both Knots flavors are excluded at the dependency level.
+2. **Bitcoin must be unpruned, with the transaction index and ZeroMQ on** — a standing requirement, enforced by a recurring task.
+3. **A Tor address is effectively mandatory**, because pairing is built around the onion.
+4. **Switching networks is not a migration.** The database is keyed to one chain.
+5. **Changing any of the three secrets invalidates every paired wallet.**
+6. **Dojo's own configuration is not exposed** beyond what the actions cover; everything else is upstream's default.
+7. **The maintenance tool and the wallet API share one port**, distinguished by path.
 
 ---
 
@@ -255,17 +226,19 @@ See [AGENTS.md](AGENTS.md).
 
 ```yaml
 package_id: dojo
-architectures: [x86_64, aarch64]
+image: built from ./Dockerfile
+architectures:
+  - x86_64
+  - aarch64
+subcontainers:
+  - dojo-sub # mariadb, soroban, backend and frontend daemons
 volumes:
   main: /data
-  db: /var/lib/mysql
-dependency_mounts:
-  bitcoind_or_bitcoind-testnet_main: /mnt/bitcoin (read-only)
-ports:
-  ui: 9000 # /admin — maintenance tool
-  api: 9000 # /v2   — wallet endpoint
-dependencies: [tor, bitcoind, bitcoind-testnet, fulcrum, electrs]
-startos_managed_env_vars:
+  db: /var/lib/mysql # bitcoin's main volume is mounted read-only at /mnt/bitcoin
+file_models:
+  - store.json
+  - backend.json # written by the container, read by the pairing action
+startos_managed_env_vars: # S9_-prefixed; a container script maps them to Dojo's own names
   - S9_DATA_DIR
   - S9_TOR_ADDRESS
   - S9_TOR_SOCKS_HOST
@@ -288,9 +261,29 @@ startos_managed_env_vars:
   - S9_PANDOTX_PUSH
   - S9_PANDOTX_FALLBACK
   - S9_PANDOTX_RETRIES
+dependencies:
+  - tor # always required, kind: running
+  - bitcoind # required on mainnet; Knots flavors excluded
+  - bitcoind-testnet # required on testnet4
+  - fulcrum # required when selected
+  - electrs # required when selected
+interfaces: # both on port 9000, split by path
+  ui: { type: ui, port: 9000, path: /admin/ }
+  api: { type: api, port: 9000, path: /v2/ }
 actions:
   - select-bitcoin-node
   - select-indexer
   - configure-dojo
-  - view-credentials
+  - view-credentials # only-running
+tasks:
+  - { action: 'bitcoind:autoconfig', severity: critical } # on Bitcoin's page, recurring
+health_checks:
+  - mariadb # displayed "Database"
+  - soroban # displayed "Soroban"
+  - backend # displayed "Dojo API"
+  - frontend # displayed "Web Server"
+  - tor-address # displayed "Tor Address"
+  - bitcoin-client # displayed "Bitcoin Client"
+  - pushtx # displayed "Transaction Broadcast"
+  - synced # displayed "Sync Progress"
 ```

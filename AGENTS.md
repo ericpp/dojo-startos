@@ -6,25 +6,16 @@ Develop it inside a StartOS packaging workspace created by `start-cli s9pk init-
 which provides the packaging guide and agent context one level up. If you're reading this in a
 bare clone with no workspace, the full guide is at <https://docs.start9.com/packaging>.
 
-**Start every task at the recipe index** — `../start-technologies/projects/start-sdk/docs/src/recipes.md`
-(or <https://docs.start9.com/packaging/recipes.html>). It maps an intent ("prompt the user to create
-admin credentials", "expose a web UI") to the constructs, the reference pages, and a named production
-package to copy. Find the recipe before you read this package's neighbours: a package you reach by
-grepping may be non-conformant, and the recipe outranks it.
-
-Work this package's `TODO.md` from top to bottom. Keep `README.md` (architecture, for developers and LLMs) and `instructions.md` (end-user docs) in sync with your changes.
+Work this package's `TODO.md` from top to bottom. Keep `README.md` (technical reference for an AI support or administering agent) and `instructions.md` (end-user docs) in sync with your changes.
 
 ## This repo
 
-- **Package id is `dojo`.** It wraps the `samourai-dojo` git submodule — check it out (`git submodule update --init`) before building; the Dockerfile builds from it, plus Tor and Soroban from source, so a cold image build is slow.
-- **Four daemons share one subcontainer** (`dojo-sub`): MariaDB, Soroban, the Dojo API under pm2, and nginx. They talk to each other over `127.0.0.1`, so they must keep sharing a single `SubContainer` instance — splitting them breaks every internal connection.
-- **`main.ts` is the only place that resolves addresses.** Bitcoin's RPC and ZeroMQ, the indexer's Electrum port and Tor's SOCKS proxy are read with `sdk.host.getBridgeAddress` and passed to the daemons as `S9_*` environment variables. Never reintroduce `<pkg>.startos` DNS names or hardcoded dependency ports — they are deprecated and the ports are assigned dynamically.
-- **The entrypoint and health scripts live in `assets/`**, mounted read-only at `/assets` by `main.ts` and invoked as `['bash', '/assets/<script>']` — not baked into the image, because the Dockerfile compiles Tor and Soroban from source and a script edit should not pay for that. Keep new scripts there; the only script still copied in is upstream's `soroban-restart.sh`, which comes from the submodule.
-- **`assets/config.env` maps `S9_*` onto the names Dojo reads**, and the ordering is load-bearing: it sources upstream's own `docker/my-dojo/.env` first for Dojo's defaults, then applies everything StartOS resolved. Setting an upstream name (`NODE_API_KEY`, `BITCOIND_IP`, …) directly from `main.ts` would be clobbered by that source.
-- **The three secrets are minted once** by `init/seedSecrets.ts` and persisted in `store.json`. Do not give them generated defaults in the file model — a `.catch()` default is evaluated per process and never written back, so every restart would hand out a new API key and change the user's pairing code.
-- **Health scripts use a three-way exit protocol**: `0` healthy, `60` still starting, anything else still loading. `runCheckScript` in `main.ts` maps it; `sdk.healthCheck.runHealthScript` cannot express it.
+- **Upstream is a git submodule** — `git submodule update --init` before building. The Dockerfile builds from it plus Tor and Soroban from source, so a cold image build is slow.
+- **The four daemons must keep sharing one `SubContainer` instance.** MariaDB, Soroban, the API under pm2, and nginx talk to each other over `127.0.0.1`; splitting them breaks every internal connection.
+- **`main.ts` is the only place that resolves addresses.** Never reintroduce `<pkg>.startos` DNS names or hardcoded dependency ports — they are deprecated and the ports are assigned dynamically. Pin `ssl: false` on the Bitcoin RPC and indexer lookups: both publish a plaintext _and_ a TLS bridge address, and Dojo speaks the plain one.
+- **`assets/config.env` maps `S9_*` onto the names Dojo reads, and the ordering is load-bearing.** It sources upstream's own `docker/my-dojo/.env` first for Dojo's defaults, then applies what StartOS resolved. Setting an upstream name (`NODE_API_KEY`, `BITCOIND_IP`, …) directly from `main.ts` would be clobbered by that source.
+- **The entrypoint and health scripts live in `assets/`**, mounted read-only and invoked as `['bash', '/assets/<script>']` — not baked in, because a script edit should not pay for recompiling Tor and Soroban. Keep new scripts there; the only one still copied into the image is upstream's `soroban-restart.sh`, from the submodule.
+- **The three secrets are minted once** by `init/seedSecrets.ts` and persisted. Do not give them generated defaults in the file model — a `.catch()` default is evaluated per process and never written back, so every restart would hand out a new API key and change the user's pairing code.
+- **Knots is excluded by flavor, not by a version floor.** Dojo exits on any node whose subversion contains "Knots" (`lib/bitcoind-rpc/rpc-client.js`), and Knots tracks Core's majors — so a floor above its current line would stop excluding it the moment it caught up. The exclusion belongs in the dependency range, where it presents as an unmet dependency rather than a crash-looping accounts API.
+- **The slow triggers on `tor-address` and `bitcoin-client` are deliberate.** Neither is a transient failure the default 1-second failure cadence is for: the onion address only changes on a restart, and each Bitcoin-client poll is an RPC round trip that would otherwise hammer Bitcoin forever.
 - **`bc` is not in the image.** Compute percentages with bash arithmetic.
-
-## Inspecting a running install
-
-To run a command inside the service's container (read its generated config, grep app logs), use `start-cli package attach dojo -n dojo-sub -- <cmd>`. Select the subcontainer by **name** with `-n` (the name passed to `SubContainer.of` in `main.ts` — here `dojo-sub`) or by image with `-i`. Note: `-s/--subcontainer` matches the internal **Guid**, not the name, so passing a name to `-s` fails with "no matching subcontainers".
