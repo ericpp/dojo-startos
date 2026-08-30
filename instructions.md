@@ -2,6 +2,7 @@
 
 ## Documentation
 
+- [Start9 Bitcoin Guides](https://docs.start9.com/bitcoin-guides/) — connecting a wallet to your own Bitcoin node, and which wallets work on which platforms.
 - [Dojo Open Source Project](https://dojo-osp.org/) — the upstream project site, with the
   maintenance tool guide and wallet pairing documentation.
 
