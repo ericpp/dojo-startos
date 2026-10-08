@@ -25,8 +25,8 @@ never have to invent them, and they do not change when Dojo restarts.
    change to Bitcoin's settings — it needs pruning turned off and txindex and ZeroMQ turned on. Accept
    it; the values are filled in for you. Dojo does not work with Bitcoin Knots; if that is what you
    run, StartOS will show the Bitcoin dependency as unsatisfied.
-3. **Install an indexer** — Fulcrum or Electrs. Fulcrum rescans deep wallets faster; Electrs uses
-   less disk. Run **Select Indexer** if you want the one Dojo did not ask for by default.
+3. **Install an indexer** — Fulcrum or Electrs. Dojo uses Fulcrum unless you run **Select Indexer**
+   and choose Electrs.
 4. **Start Dojo.** The first start builds its database, so give it a few minutes.
 5. **Wait for Sync Progress to turn green.** Dojo imports from your indexer and follows your node
    from there. A fresh Bitcoin node or a fresh index has to finish first.

@@ -71,7 +71,7 @@ export const configureDojoAction = sdk.Action.withInput(
     soroban: Value.union({
       name: i18n('Soroban Network'),
       description: i18n(
-        'Announce this Dojo to the Soroban network so other nodes can relay through it',
+        "Whether other Soroban users can reach the Soroban network through this Dojo.\n- Do not announce: only this Dojo uses its Soroban node.\n- Announce: the node's address is published, so other users can interact with the Soroban network through it.",
       ),
       warning: null,
       variants: Variants.of({
@@ -101,7 +101,7 @@ export const configureDojoAction = sdk.Action.withInput(
     pandotxFallbackMode: Value.select({
       name: i18n('If Soroban Broadcast Fails'),
       description: i18n(
-        'What to do when no Soroban node accepts a transaction',
+        'What happens to a transaction no Soroban node accepts.\n- Broadcast from this node instead: the transaction is still broadcast, from your own node.\n- Do not broadcast: the transaction fails and is not broadcast.',
       ),
       values: {
         convenient: i18n('Broadcast from this node instead'),

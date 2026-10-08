@@ -21,7 +21,9 @@ export const selectBitcoinNodeAction = sdk.Action.withInput(
   InputSpec.of({
     bitcoinNode: Value.select({
       name: i18n('Bitcoin Node'),
-      description: i18n('Choose which Bitcoin node Dojo tracks'),
+      description: i18n(
+        'The network Dojo tracks.\n- Bitcoin: mainnet, from the Bitcoin service.\n- Bitcoin (testnet4): testnet4, from the Bitcoin (testnet4) service.',
+      ),
       values: {
         bitcoind: i18n('Bitcoin'),
         'bitcoind-testnet': i18n('Bitcoin (testnet4)'),

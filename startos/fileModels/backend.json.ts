@@ -6,7 +6,7 @@ import { sdk } from '../sdk'
  * action. The pairing payload is assembled in the container because it embeds
  * Dojo's own version tag, which only the image knows.
  */
-const shape = z.object({
+const shape = z.looseObject({
   pairingCode: z.string().catch(''),
 })
 

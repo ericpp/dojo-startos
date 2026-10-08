@@ -19,10 +19,12 @@ export const selectIndexerAction = sdk.Action.withInput(
   InputSpec.of({
     indexer: Value.select({
       name: i18n('Indexer'),
-      description: i18n('Choose which indexer Dojo looks addresses up in'),
+      description: i18n(
+        'Where Dojo looks up address history. The indexer you pick must be installed.\n- Fulcrum: reads from the Fulcrum service.\n- Electrs: reads from the Electrs service.',
+      ),
       values: {
-        fulcrum: i18n('Fulcrum — faster rescans, more disk'),
-        electrs: i18n('Electrs — smaller index, slower rescans'),
+        fulcrum: i18n('Fulcrum'),
+        electrs: i18n('Electrs'),
       },
       default: 'fulcrum',
     }),

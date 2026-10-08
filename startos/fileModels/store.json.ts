@@ -1,7 +1,7 @@
 import { FileHelper, z } from '@start9labs/start-sdk'
 import { sdk } from '../sdk'
 
-const shape = z.object({
+const shape = z.looseObject({
   bitcoinNode: z.enum(['bitcoind', 'bitcoind-testnet']).catch('bitcoind'),
   indexer: z.enum(['fulcrum', 'electrs']).catch('fulcrum'),
   paymentCode: z.string().nullable().catch(null),

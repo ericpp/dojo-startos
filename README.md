@@ -92,7 +92,7 @@ Five declared, and which are actually required depends on two selections.
 | Fulcrum          | Required when selected as the indexer  |
 | Electrs          | Required when selected as the indexer  |
 
-Exactly one Bitcoin node and one indexer are required at a time; the manifest marks them optional because the choice is the user's.
+Exactly one Bitcoin node and one indexer are required at a time; `startos/dependencies.ts` declares them optional, each enabled by the user's selection.
 
 **Bitcoin needs three settings, and the package raises a recurring task for them.** Dojo reads raw transactions over RPC and subscribes to blocks over ZeroMQ, and a pruned or unindexed node can serve neither. The task is declared to recur rather than fire once, so turning any of them back off brings it back.
 
@@ -202,7 +202,7 @@ Six checks. Four are daemons, two are conditions the daemons cannot report.
 
 ## Backups and Restore
 
-**The database is dumped; everything else is copied.** `sdk.Backups.withMysqlDump` handles MariaDB and the `main` volume is added alongside.
+**The database is dumped; everything else is copied.** `sdk.Backups.withMariadbDump` handles MariaDB and the `main` volume is added alongside.
 
 MariaDB writes its data directory continuously while Dojo runs, so copying those files produces a torn database. A logical dump is consistent, and it also survives a future engine bump instead of being tied to the on-disk format it was taken with. **The `db` volume's files are never captured** — a restore starts the engine and replays the dump into it.
 

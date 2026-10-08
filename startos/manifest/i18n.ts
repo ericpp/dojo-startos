@@ -42,28 +42,15 @@ export const bitcoinTestnetDescription = {
     'Fournit les données de la blockchain testnet4, pour exécuter Dojo sur testnet',
 }
 
-export const fulcrumDescription = {
-  en_US: 'Indexes addresses so Dojo can scan and rescan deep wallets quickly',
+export const indexerDescription = {
+  en_US: 'Indexes addresses so Dojo can look up wallet history',
   es_ES:
-    'Indexa direcciones para que Dojo pueda escanear y reescanear carteras profundas rápidamente',
+    'Indexa direcciones para que Dojo pueda consultar el historial de las carteras',
   de_DE:
-    'Indexiert Adressen, damit Dojo tiefe Wallets schnell scannen und erneut scannen kann',
-  pl_PL:
-    'Indeksuje adresy, aby Dojo mogło szybko skanować i ponownie skanować głębokie portfele',
+    'Indexiert Adressen, damit Dojo den Verlauf von Wallets nachschlagen kann',
+  pl_PL: 'Indeksuje adresy, aby Dojo mogło sprawdzać historię portfeli',
   fr_FR:
-    'Indexe les adresses pour que Dojo puisse scanner et rescanner rapidement les portefeuilles profonds',
-}
-
-export const electrsDescription = {
-  en_US: 'Indexes addresses for Dojo, using less disk space than Fulcrum',
-  es_ES:
-    'Indexa direcciones para Dojo, usando menos espacio en disco que Fulcrum',
-  de_DE:
-    'Indexiert Adressen für Dojo und benötigt weniger Speicherplatz als Fulcrum',
-  pl_PL:
-    'Indeksuje adresy dla Dojo, zajmując mniej miejsca na dysku niż Fulcrum',
-  fr_FR:
-    "Indexe les adresses pour Dojo, en utilisant moins d'espace disque que Fulcrum",
+    "Indexe les adresses pour que Dojo puisse consulter l'historique des portefeuilles",
 }
 
 export const torDescription = {

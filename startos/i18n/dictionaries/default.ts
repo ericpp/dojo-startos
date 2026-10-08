@@ -47,8 +47,8 @@ const dict = {
   'Select Indexer': 31,
   'Choose which indexer Dojo looks addresses up in': 32,
   Indexer: 33,
-  'Fulcrum — faster rescans, more disk': 34,
-  'Electrs — smaller index, slower rescans': 35,
+  Fulcrum: 34,
+  Electrs: 35,
 
   // actions/configureDojo.ts
   'Configure Dojo': 36,
@@ -63,7 +63,7 @@ const dict = {
   'JWT Secret': 45,
   'The secret Dojo signs its session tokens with': 46,
   'Soroban Network': 47,
-  'Announce this Dojo to the Soroban network so other nodes can relay through it': 48,
+  "Whether other Soroban users can reach the Soroban network through this Dojo.\n- Do not announce: only this Dojo uses its Soroban node.\n- Announce: the node's address is published, so other users can interact with the Soroban network through it.": 48,
   'Do not announce': 49,
   Announce: 50,
   'Relay Transactions': 51,
@@ -71,7 +71,7 @@ const dict = {
   'Broadcast Through Soroban': 53,
   'Send your own transactions through a randomly chosen Soroban node, so they are not first seen at your node': 54,
   'If Soroban Broadcast Fails': 55,
-  'What to do when no Soroban node accepts a transaction': 56,
+  'What happens to a transaction no Soroban node accepts.\n- Broadcast from this node instead: the transaction is still broadcast, from your own node.\n- Do not broadcast: the transaction fails and is not broadcast.': 56,
   'Broadcast from this node instead': 57,
   'Do not broadcast': 58,
   'Soroban Broadcast Retries': 59,
@@ -88,6 +88,8 @@ const dict = {
   'Bitcoin Client': 68,
   'Bitcoin is a client Dojo supports': 69,
   'Waiting for Bitcoin...': 70,
+  'The network Dojo tracks.\n- Bitcoin: mainnet, from the Bitcoin service.\n- Bitcoin (testnet4): testnet4, from the Bitcoin (testnet4) service.': 74,
+  'Where Dojo looks up address history. The indexer you pick must be installed.\n- Fulcrum: reads from the Fulcrum service.\n- Electrs: reads from the Electrs service.': 75,
 } as const
 
 /**

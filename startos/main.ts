@@ -35,11 +35,10 @@ const runCheckScript = async (
   // The daemons' environment, not an empty one: the scripts source config.env
   // too, and without the S9_* values they authenticate with an empty admin key
   // and dial an empty Bitcoin RPC address.
-  const res = await sub.exec(
-    ['bash', `${assetsDir}/${script}`],
-    { env },
-    30_000,
-  )
+  const res = await sub.exec(['bash', `${assetsDir}/${script}`], {
+    env,
+    timeout: 30_000,
+  })
   const stderr = res.stderr?.toString().trim()
   if (res.exitCode === 0) return { result: 'success', message: successMessage }
   if (res.exitCode === 62)
