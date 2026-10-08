@@ -101,7 +101,7 @@ export const configureDojoAction = sdk.Action.withInput(
     pandotxFallbackMode: Value.select({
       name: i18n('If Soroban Broadcast Fails'),
       description: i18n(
-        'What happens to a transaction no Soroban node accepts.\n- Broadcast from this node instead: the transaction is still broadcast, from your own node.\n- Do not broadcast: the transaction fails and is not broadcast.',
+        'What happens to a transaction no Soroban node accepts.\n- Broadcast from this node instead: the transaction is still broadcast, from your own node.\n- Do not broadcast: your own node does not broadcast it either, and the wallet is not told it failed.',
       ),
       values: {
         convenient: i18n('Broadcast from this node instead'),

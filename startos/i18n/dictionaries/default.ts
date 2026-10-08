@@ -71,7 +71,7 @@ const dict = {
   'Broadcast Through Soroban': 53,
   'Send your own transactions through a randomly chosen Soroban node, so they are not first seen at your node': 54,
   'If Soroban Broadcast Fails': 55,
-  'What happens to a transaction no Soroban node accepts.\n- Broadcast from this node instead: the transaction is still broadcast, from your own node.\n- Do not broadcast: the transaction fails and is not broadcast.': 56,
+  'What happens to a transaction no Soroban node accepts.\n- Broadcast from this node instead: the transaction is still broadcast, from your own node.\n- Do not broadcast: your own node does not broadcast it either, and the wallet is not told it failed.': 56,
   'Broadcast from this node instead': 57,
   'Do not broadcast': 58,
   'Soroban Broadcast Retries': 59,
