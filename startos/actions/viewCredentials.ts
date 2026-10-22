@@ -40,6 +40,7 @@ export const viewCredentialsAction = sdk.Action.withoutInput(
             masked: true,
             copyable: true,
             qr: true,
+            launchable: false,
           },
           {
             name: i18n('Admin Key'),
@@ -49,6 +50,7 @@ export const viewCredentialsAction = sdk.Action.withoutInput(
             masked: true,
             copyable: true,
             qr: false,
+            launchable: false,
           },
         ],
       },
