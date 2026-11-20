@@ -53,13 +53,14 @@ The four daemons are MariaDB, Soroban, Dojo's API backend, and the nginx front e
 
 ## Volume and Data Layout
 
-Two volumes, plus a read-only view of Bitcoin's.
+Two volumes, plus a read-only view of the selected Bitcoin node's. On mainnet that is Bitcoin's `public` volume, which holds only the RPC cookie; Bitcoin (testnet4) publishes no such volume yet, so on testnet it is that package's whole `main` volume.
 
-| Volume                | Mount Point      | Purpose                                       |
-| --------------------- | ---------------- | --------------------------------------------- |
-| `main`                | `/data`          | Dojo's state, the store, and the pairing data |
-| `db`                  | `/var/lib/mysql` | MariaDB's data directory                      |
-| Bitcoin's `main` (ro) | `/mnt/bitcoin`   | The RPC cookie                                |
+| Volume                         | Mount Point      | Purpose                                         |
+| ------------------------------ | ---------------- | ----------------------------------------------- |
+| `main`                         | `/data`          | Dojo's state, the store, and the pairing data   |
+| `db`                           | `/var/lib/mysql` | MariaDB's data directory                        |
+| Bitcoin's `public` (ro)        | `/mnt/bitcoin`   | The RPC cookie (mainnet)                        |
+| Bitcoin testnet4's `main` (ro) | `/mnt/bitcoin`   | The RPC cookie, at `testnet4/.cookie` (testnet) |
 
 The database is on its own volume because it is backed up differently — see [Backups and Restore](#backups-and-restore).
 
@@ -72,7 +73,9 @@ Two models: one the package owns, and one the container writes for the package t
 | `store.json`   | JSON   | Yes — `FileHelper.json` | Init and the actions |
 | `backend.json` | JSON   | Yes — `FileHelper.json` | The backend daemon   |
 
-**`store.json`** holds the node and indexer selections, Dojo's three secrets, and the Soroban and broadcast settings.
+**`store.json`** holds the node and indexer selections, Dojo's three secrets, the MariaDB account's password, and the Soroban and broadcast settings.
+
+**The MariaDB password is minted on install.** Install init writes a random one before the database is first created, and the `samourai` account is created with it. An install that predates the field keeps the password its database was created with, `samourai`, which is the field's default. MariaDB listens on loopback only, and the root password it is created with is random and never stored or logged.
 
 **The three secrets are seeded at init, deliberately not defaulted.** A generated `.catch()` default is evaluated per process and never written back — which would hand out a different API key on every restart and silently change the user's pairing code. So they are minted once and persisted, and an empty value means "not generated yet" rather than a usable key.
 
@@ -235,7 +238,7 @@ subcontainers:
   - dojo-sub # mariadb, soroban, backend and frontend daemons
 volumes:
   main: /data
-  db: /var/lib/mysql # bitcoin's main volume is mounted read-only at /mnt/bitcoin
+  db: /var/lib/mysql # bitcoind's public volume (testnet4: main) is mounted read-only at /mnt/bitcoin
 file_models:
   - store.json
   - backend.json # written by the container, read by the pairing action
@@ -256,6 +259,7 @@ startos_managed_env_vars: # S9_-prefixed; a container script maps them to Dojo's
   - S9_API_KEY
   - S9_ADMIN_KEY
   - S9_JWT_SECRET
+  - S9_MYSQL_PASSWORD
   - S9_PAYMENT_CODE
   - S9_SOROBAN_ANNOUNCE
   - S9_PANDOTX_PROCESS

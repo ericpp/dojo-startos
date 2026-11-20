@@ -11,6 +11,8 @@ const shape = z.looseObject({
   adminKey: z.string().catch(''),
   apiKey: z.string().catch(''),
   jwtSecret: z.string().catch(''),
+  // Seeded on install; installs from before 1.29.2:8 created the account with this one.
+  mysqlPassword: z.string().catch('samourai'),
   sorobanAnnounce: z.boolean().catch(false),
   pandotxProcess: z.boolean().catch(false),
   pandotxPush: z.boolean().catch(true),

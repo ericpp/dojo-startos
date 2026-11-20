@@ -50,7 +50,7 @@ const bitcoind = sdk.Dependency.optional('bitcoind', {
   },
   // Dojo exits on any node whose subversion contains "Knots" (lib/bitcoind-rpc/rpc-client.js).
   versionRange:
-    '((>=28.4:29 && <29) || (>=29.4:16 && <30) || (>=30.3:16 && <31) || >=31.1:16) && !#knots && !#knotsprerdts',
+    '((>=28.4:42 && <29) || (>=29.5:4 && <30) || (>=30.4:4 && <31) || >=31.2:4) && !#knots && !#knotsprerdts',
   kind: 'running',
   healthChecks: ['bitcoind'],
   enabled: async ({ effects }) =>

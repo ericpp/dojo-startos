@@ -15,7 +15,7 @@ fi
 
 MYSQL_DATABASE=${MYSQL_DATABASE:-"samourai-main"}
 MYSQL_USER=${MYSQL_USER:-"samourai"}
-MYSQL_PASSWORD=${MYSQL_PASSWORD:-"samourai"}
+MYSQL_PASSWORD=${MYSQL_PASSWORD:?}
 
 if [ ! -d  /var/lib/mysql/mysql ]; then
 	echo "[i] MySQL data directory not found or not initialized, creating initial DBs"
@@ -26,8 +26,7 @@ if [ ! -d  /var/lib/mysql/mysql ]; then
 	mysql_install_db --user=mysql --ldata=/var/lib/mysql > /dev/null
 
 	if [ "$MYSQL_ROOT_PASSWORD" = "" ]; then
-		MYSQL_ROOT_PASSWORD=$(pwgen 16 1)
-		echo "[i] MySQL root Password: $MYSQL_ROOT_PASSWORD"
+		MYSQL_ROOT_PASSWORD=$(pwgen -s 32 1)
 		export MYSQL_ROOT_PASSWORD
 	fi
 
@@ -52,7 +51,7 @@ EOF
 		echo "CREATE DATABASE IF NOT EXISTS \`$MYSQL_DATABASE\` CHARACTER SET utf8 COLLATE utf8_general_ci;" >> "$tfile"
 
 		if [ "$MYSQL_USER" != "" ]; then
-			echo "[i] Creating user: $MYSQL_USER with password $MYSQL_PASSWORD"
+			echo "[i] Creating user: $MYSQL_USER"
 
 			{
 				echo "GRANT ALL ON \`$MYSQL_DATABASE\`.* to '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';"
@@ -83,4 +82,4 @@ for f in /docker-entrypoint-initdb.d/*; do
 done
 
 # Start mysql
-exec /usr/bin/mysqld_safe --user=mysql --datadir='/var/lib/mysql'
+exec /usr/bin/mysqld_safe --user=mysql --datadir='/var/lib/mysql' --bind-address=127.0.0.1

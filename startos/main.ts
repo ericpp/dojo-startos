@@ -112,7 +112,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
       })
       .mountDependency<typeof bitcoinManifest | typeof bitcoinTestnetManifest>({
         dependencyId: store.bitcoinNode,
-        volumeId: 'main',
+        volumeId: node.cookieVolume,
         subpath: null,
         mountpoint: bitcoinDir,
         readonly: true,
@@ -146,6 +146,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
     S9_API_KEY: store.apiKey,
     S9_ADMIN_KEY: store.adminKey,
     S9_JWT_SECRET: store.jwtSecret,
+    S9_MYSQL_PASSWORD: store.mysqlPassword,
     S9_PAYMENT_CODE: store.paymentCode ?? '',
     S9_SOROBAN_ANNOUNCE: store.sorobanAnnounce ? 'on' : 'off',
     S9_PANDOTX_PROCESS:

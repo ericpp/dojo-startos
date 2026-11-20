@@ -3,7 +3,8 @@ import { randomInt } from 'crypto'
 import {
   rpcHostId as coreRpcHostId,
   rpcPort as coreRpcPort,
-  rpccookiefile as coreCookieFile,
+  rpcCookieName as coreCookieFile,
+  rpcVolumeId as coreRpcVolumeId,
   zmqHostId as coreZmqHostId,
   zmqPortBlock as coreZmqPortBlock,
   zmqPortTransaction as coreZmqPortTransaction,
@@ -41,16 +42,14 @@ export const bitcoinDir = '/mnt/bitcoin'
 /** Where the packaged entrypoint and health scripts are mounted, read-only. */
 export const assetsDir = '/assets'
 
-/** Upstream Dojo's fixed MariaDB credentials — its schema scripts hardcode
- * them, and the server only ever listens on loopback inside the container. */
+/** MariaDB's database and account; the account's password is per install, in store.json. */
 export const mysqlDatabase = 'samourai-main'
 export const mysqlUser = 'samourai'
-export const mysqlPassword = 'samourai'
 
 /**
  * Each supported Bitcoin flavor's bindings, imported from that package rather
- * than hardcoded — mainnet and testnet4 differ on every port and on where the
- * RPC cookie sits inside the volume. Keyed by package id, which is also the
+ * than hardcoded — mainnet and testnet4 differ on every port and on which
+ * volume holds the RPC cookie. Keyed by package id, which is also the
  * dependency id in dependencies.ts.
  */
 export const bitcoinNodes = {
@@ -59,6 +58,7 @@ export const bitcoinNodes = {
     rpc: { hostId: coreRpcHostId, internalPort: coreRpcPort },
     zmqBlock: { hostId: coreZmqHostId, internalPort: coreZmqPortBlock },
     zmqTx: { hostId: coreZmqHostId, internalPort: coreZmqPortTransaction },
+    cookieVolume: coreRpcVolumeId,
     cookieFile: coreCookieFile,
   },
   'bitcoind-testnet': {
@@ -69,6 +69,8 @@ export const bitcoinNodes = {
       hostId: testnetZmqHostId,
       internalPort: testnetZmqPortTransaction,
     },
+    // main until remcoros/bitcoind-testnet4-startos#12's public volume is released
+    cookieVolume: 'main',
     cookieFile: testnetCookieFile,
   },
 } as const

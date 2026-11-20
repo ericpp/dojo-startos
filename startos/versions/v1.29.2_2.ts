@@ -14,6 +14,7 @@ const withDefaults = (v: Partial<StoreJson>): StoreJson => ({
   adminKey: v.adminKey ?? '',
   apiKey: v.apiKey ?? '',
   jwtSecret: v.jwtSecret ?? '',
+  mysqlPassword: v.mysqlPassword ?? 'samourai',
   sorobanAnnounce: v.sorobanAnnounce ?? false,
   pandotxProcess: v.pandotxProcess ?? false,
   pandotxPush: v.pandotxPush ?? true,
