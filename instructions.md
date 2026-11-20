@@ -31,6 +31,9 @@ never have to invent them, and they do not change when Dojo restarts.
 5. **Wait for Sync Progress to turn green.** Dojo imports from your indexer and follows your node
    from there. A fresh Bitcoin node or a fresh index has to finish first.
 
+If Dojo's **Bitcoin Connection** check asks you to update Bitcoin, install Bitcoin's update; Dojo
+starts on its own once it is done.
+
 > Running on testnet4 instead of mainnet? Run **Select Bitcoin Node** before you start Dojo for the
 > first time. Dojo's database is built for one chain, so switching later leaves it tracking the
 > wrong one.

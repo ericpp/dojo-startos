@@ -204,6 +204,8 @@ Six checks. Four are daemons, two are conditions the daemons cannot report.
 
 **"Bitcoin Client" is what catches an unsupported node** before it presents as a crash-looping accounts API. It also polls slowly on purpose: each poll is an RPC round trip, and an unsupported client stays unsupported until the user changes it.
 
+**While the installed Bitcoin is too old to publish its `public` volume, none of these run.** On mainnet, Dojo then mounts nothing from Bitcoin and starts no daemon: a lone `bitcoin` check, "Bitcoin Connection", fails and asks for Bitcoin to be updated. The installed manifest is watched, so updating Bitcoin starts Dojo normally. Testnet4 is unaffected.
+
 **"Sync Progress" has a twelve-minute grace** because Dojo's initial import is genuinely long. A new install sitting in that state is working, not stuck.
 
 ## Backups and Restore
@@ -293,4 +295,5 @@ health_checks:
   - bitcoin-client # displayed "Bitcoin Client"
   - pushtx # displayed "Transaction Broadcast"
   - synced # displayed "Sync Progress"
+  - bitcoin # displayed "Bitcoin Connection"; only on mainnet while the installed Bitcoin predates its public volume
 ```

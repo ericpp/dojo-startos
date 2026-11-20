@@ -78,6 +78,8 @@ export default {
     73: 'El punto con el que las carteras se emparejan y al que consultan',
     74: 'La red que sigue Dojo.\n- Bitcoin: mainnet, desde el servicio Bitcoin.\n- Bitcoin (testnet4): testnet4, desde el servicio Bitcoin (testnet4).',
     75: 'Dónde consulta Dojo el historial de las direcciones. El indexador que elijas debe estar instalado.\n- Fulcrum: lee del servicio Fulcrum.\n- Electrs: lee del servicio Electrs.',
+    76: 'Conexión con Bitcoin',
+    77: 'Actualiza Bitcoin para que Dojo pueda conectarse a él',
   },
   de_DE: {
     0: 'Dojo wird gestartet!',
@@ -156,6 +158,8 @@ export default {
     73: 'Der Endpunkt, mit dem sich Wallets koppeln und den sie abfragen',
     74: 'Das Netzwerk, dem Dojo folgt.\n- Bitcoin: Mainnet, vom Dienst Bitcoin.\n- Bitcoin (testnet4): Testnet4, vom Dienst Bitcoin (testnet4).',
     75: 'Wo Dojo den Verlauf von Adressen nachschlägt. Der gewählte Indexer muss installiert sein.\n- Fulcrum: liest vom Dienst Fulcrum.\n- Electrs: liest vom Dienst Electrs.',
+    76: 'Bitcoin-Verbindung',
+    77: 'Aktualisiere Bitcoin, damit Dojo sich damit verbinden kann',
   },
   pl_PL: {
     0: 'Uruchamianie Dojo!',
@@ -234,6 +238,8 @@ export default {
     73: 'Punkt, z którym parują się portfele i który odpytują',
     74: 'Sieć, którą śledzi Dojo.\n- Bitcoin: mainnet, z usługi Bitcoin.\n- Bitcoin (testnet4): testnet4, z usługi Bitcoin (testnet4).',
     75: 'Gdzie Dojo sprawdza historię adresów. Wybrany indekser musi być zainstalowany.\n- Fulcrum: odczytuje z usługi Fulcrum.\n- Electrs: odczytuje z usługi Electrs.',
+    76: 'Połączenie z Bitcoinem',
+    77: 'Zaktualizuj Bitcoina, aby Dojo mógł się z nim połączyć',
   },
   fr_FR: {
     0: 'Démarrage de Dojo !',
@@ -312,5 +318,7 @@ export default {
     73: "Le point auquel les portefeuilles s'appairent et qu'ils interrogent",
     74: 'Le réseau que suit Dojo.\n- Bitcoin : mainnet, depuis le service Bitcoin.\n- Bitcoin (testnet4) : testnet4, depuis le service Bitcoin (testnet4).',
     75: "Où Dojo consulte l'historique des adresses. L'indexeur choisi doit être installé.\n- Fulcrum : lit depuis le service Fulcrum.\n- Electrs : lit depuis le service Electrs.",
+    76: 'Connexion à Bitcoin',
+    77: "Mettez Bitcoin à jour pour que Dojo puisse s'y connecter",
   },
 } satisfies Record<string, LangDict>

@@ -88,6 +88,8 @@ const dict = {
   'Bitcoin Client': 68,
   'Bitcoin is a client Dojo supports': 69,
   'Waiting for Bitcoin...': 70,
+  'Bitcoin Connection': 76,
+  'Update Bitcoin so Dojo can connect to it': 77,
   'The network Dojo tracks.\n- Bitcoin: mainnet, from the Bitcoin service.\n- Bitcoin (testnet4): testnet4, from the Bitcoin (testnet4) service.': 74,
   'Where Dojo looks up address history. The indexer you pick must be installed.\n- Fulcrum: reads from the Fulcrum service.\n- Electrs: reads from the Electrs service.': 75,
 } as const

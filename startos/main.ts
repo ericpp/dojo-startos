@@ -58,6 +58,28 @@ export const main = sdk.setupMain(async ({ effects }) => {
   }
 
   const node = bitcoinNodes[store.bitcoinNode]
+  // An older Bitcoin lacks the public volume, and mounting a missing volume fails the start.
+  const hasCookieVolume =
+    store.bitcoinNode !== 'bitcoind' ||
+    (await sdk
+      .getServiceManifest(effects, 'bitcoind', (m) =>
+        m?.volumes.includes(node.cookieVolume),
+      )
+      .const()) !== false
+  if (!hasCookieVolume) {
+    return sdk.Daemons.of(effects).addHealthCheck('bitcoin', {
+      ready: {
+        display: i18n('Bitcoin Connection'),
+        gracePeriod: 0,
+        trigger: sdk.trigger.onceTrigger,
+        fn: () => ({
+          result: 'failure',
+          message: i18n('Update Bitcoin so Dojo can connect to it'),
+        }),
+      },
+      requires: [],
+    })
+  }
   const bitcoin = await getBitcoinBridge(effects, store.bitcoinNode)
   if (!bitcoin.rpc || !bitcoin.zmqBlock || !bitcoin.zmqTx) {
     throw new Error(
