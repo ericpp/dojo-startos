@@ -22,12 +22,16 @@ FROM alpine:3.23.3 AS torproject
 
 ENV TOR_GIT_URL=https://gitlab.torproject.org/tpo/core/tor.git
 ENV TOR_VERSION=tor-0.4.9.6
+# TOR_VERSION's commit; the tag is signed by B74417EDDF22AC9F9E90F49142E86A2A11F48D36.
+ARG TOR_COMMIT=894a92ac2279747ec375837a170766cf6bba3711
 
 RUN apk --update --no-cache add ca-certificates
 RUN apk --no-cache add alpine-sdk automake autoconf
 RUN apk --no-cache add openssl-dev libevent-dev zlib-dev
 
-RUN git clone $TOR_GIT_URL /tor -b $TOR_VERSION --depth 1
+RUN git clone --depth 1 --branch "$TOR_VERSION" "$TOR_GIT_URL" /tor && \
+    git -C /tor checkout -q --detach "$TOR_COMMIT" && \
+    test "$(git -C /tor rev-parse "refs/tags/$TOR_VERSION^{commit}")" = "$TOR_COMMIT"
 
 WORKDIR /tor
 
@@ -49,6 +53,7 @@ FROM golang:1.25.6-alpine3.23 AS soroban-build
 
 ENV SOROBAN_VERSION=0.4.2
 ENV SOROBAN_URL=https://github.com/Dojo-Open-Source-Project/soroban/archive/refs/tags/v$SOROBAN_VERSION.tar.gz
+ARG SOROBAN_SHA256=8608fc823dea157c20c1099a7207e62dbdc4b743d70bf41e16dc51005272d93e
 
 RUN apk --no-cache --update add ca-certificates
 RUN apk --no-cache --update add alpine-sdk linux-headers wget
@@ -58,6 +63,7 @@ RUN set -ex && \
     mkdir -p /src && \
     cd ~ && \
     wget -qO soroban.tar.gz "$SOROBAN_URL" && \
+    echo "$SOROBAN_SHA256  soroban.tar.gz" | sha256sum -c - && \
     tar -xzvf soroban.tar.gz -C /src --strip-components 1 && \
     rm soroban.tar.gz && \
     cd /src

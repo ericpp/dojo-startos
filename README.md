@@ -51,6 +51,8 @@ The four daemons are MariaDB, Soroban, Dojo's API backend, and the nginx front e
 
 **The entrypoint and health scripts are mounted from assets, not baked into the image.** Editing one would otherwise mean rebuilding a Dockerfile that compiles Tor and Soroban from source — so the scripts are a mount and a rebuild is not needed to change them.
 
+The build pins both sources: Tor is cloned at its release tag and checked out at the commit the `Dockerfile` pins for it, and Soroban's source archive must match a pinned SHA-256. See `UPDATING.md`.
+
 ## Volume and Data Layout
 
 Two volumes, plus a read-only view of the selected Bitcoin node's. On mainnet that is Bitcoin's `public` volume, which holds only the RPC cookie; Bitcoin (testnet4) publishes no such volume yet, so on testnet it is that package's whole `main` volume.
