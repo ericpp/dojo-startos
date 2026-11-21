@@ -1,18 +1,18 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '1.29.2:9',
+  version: '1.29.3:0',
   releaseNotes: {
     en_US:
-      'The package now verifies the Tor and Soroban sources it builds: Tor against its release commit, Soroban against a pinned checksum. On mainnet, with a Bitcoin too old to publish the RPC credential Dojo reads, Dojo no longer fails to start: it waits and tells you to update Bitcoin.',
+      'Updates Samourai Dojo to 1.29.3. Upstream only fixed file permissions in its MariaDB Docker image, which this package does not use, so nothing changes in how Dojo runs.',
     es_ES:
-      'El paquete ahora verifica el código fuente de Tor y Soroban que compila: Tor con el commit de su versión y Soroban con una suma de comprobación fijada. En mainnet, con un Bitcoin demasiado antiguo para publicar la credencial RPC que Dojo lee, Dojo ya no falla al iniciarse: espera y te indica que actualices Bitcoin.',
+      'Actualiza Samourai Dojo a 1.29.3. Upstream solo corrigió los permisos de archivos en su imagen Docker de MariaDB, que este paquete no utiliza, por lo que el funcionamiento de Dojo no cambia.',
     de_DE:
-      'Das Paket prüft jetzt den Quellcode von Tor und Soroban, den es baut: Tor gegen seinen Release-Commit, Soroban gegen eine festgelegte Prüfsumme. Im Mainnet startet Dojo mit einem Bitcoin, das zu alt ist, um die von Dojo gelesenen RPC-Zugangsdaten bereitzustellen, nicht mehr fehlerhaft: Es wartet und fordert dich auf, Bitcoin zu aktualisieren.',
+      'Aktualisiert Samourai Dojo auf 1.29.3. Upstream hat nur Dateiberechtigungen in seinem MariaDB-Docker-Image korrigiert, das dieses Paket nicht verwendet; am Betrieb von Dojo ändert sich daher nichts.',
     pl_PL:
-      'Pakiet weryfikuje teraz budowany kod źródłowy Tor i Soroban: Tor względem commita wydania, Soroban względem przypiętej sumy kontrolnej. Na mainnecie, gdy Bitcoin jest zbyt stary, by udostępniać dane uwierzytelniające RPC odczytywane przez Dojo, Dojo nie kończy już uruchamiania błędem: czeka i prosi o aktualizację Bitcoina.',
+      'Aktualizuje Samourai Dojo do wersji 1.29.3. Upstream poprawił jedynie uprawnienia plików w swoim obrazie Docker MariaDB, z którego ten pakiet nie korzysta, więc działanie Dojo się nie zmienia.',
     fr_FR:
-      'Le paquet vérifie désormais le code source de Tor et de Soroban qu’il compile : Tor par rapport au commit de sa version, Soroban par rapport à une somme de contrôle fixée. Sur mainnet, avec un Bitcoin trop ancien pour publier l’identifiant RPC que Dojo lit, Dojo n’échoue plus au démarrage : il attend et vous invite à mettre Bitcoin à jour.',
+      "Met à jour Samourai Dojo vers 1.29.3. L'amont a uniquement corrigé les permissions de fichiers de son image Docker MariaDB, que ce paquet n'utilise pas ; le fonctionnement de Dojo reste donc inchangé.",
   },
   migrations: {
     up: async () => {},
